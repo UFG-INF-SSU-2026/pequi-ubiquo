@@ -1,7 +1,5 @@
 # Atividade em Grupo 01 — Análise inicial de um sistema ubíquo
 
-**Disciplina:** Software para Sistemas Ubíquos — INF/UFG — Prof. Dr. Otávio Calaça Xavier
-
 **Integrantes:** Thiago Nascente, Samuel Machado, Moisés Protázio, Vinícius Benevides
 
 **Cenário escolhido:** **TowerAI** — appliance **multimodal** (áudio + visão) de colaboração, ciente de contexto e com **processamento de imagens feito localmente**, para grupos reunidos em ambientes sem conectividade externa.
