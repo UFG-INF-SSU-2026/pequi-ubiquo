@@ -78,20 +78,6 @@ Classificações **múltiplas**, cada uma justificada:
 - **Aplicação ubíqua / ciente de contexto (multimodal):** serviço ambiente na LAN, acessível por qualquer dispositivo, que **percebe contexto auditivo e visual** e se adapta.
 - **Sistema ciber-físico (em sentido informacional):** laço **percepção → processamento → resposta** ligando o mundo físico (fala, cena, topologia de rede) ao digital; a atuação é informacional, caracterizando um CPS **parcial**.
 
-### 9. Contexto e adaptação
-| Mudança de contexto | Adaptação do sistema |
-|---|---|
-| Host com duas interfaces (Wi-Fi de internet + LAN do Pi) e detecção incorreta | `TOWERAI_LAN_IP` fixa a interface da LAN para mDNS e Network Map *(implementado)* |
-| **Baixa luminosidade / cena ruidosa (visão)** | **Reduzir taxa de quadros, aplicar pré-processamento, ou sinalizar baixa confiança da inferência** |
-| **GPU indisponível ou host sob alta carga** | **Alternar para modelo de visão mais leve/CPU, reduzir resolução/FPS ou enfileirar em lote** |
-| **Sala marcada como sensível (privacidade)** | **Desabilitar captura de imagem e/ou persistir apenas o derivado textual (OCR), descartando o quadro** |
-| Modelo de linguagem/visão indisponível | Degradação graciosa: chat e transcrição seguem; `/health` reporta o estado |
-| Novo sensor (câmera/microfone) ingressa na rede | *Rescan* do Network Map o apresenta em "+ new" e a nova fonte é incorporada |
-| Subtensão/energia do Pi | Limitação de `arm_freq` e *safety-net* que reverte a configuração de rede em falha |
-| Mudança de idioma do grupo | Troca do modelo de STT (`WHISPER_LANGUAGE` / modelo Vosk) e do idioma do OCR |
-| Queda da internet (NAT do PC) | Por concepção, colaboração, transcrição e **visão local** permanecem funcionais offline |
-
-
 ## Síntese
 A solução resolve o problema declarado — colaboração e **acessibilidade multimodal** em ambientes sem internet — ao **deslocar toda a computação (fala e imagem) para a borda** e ao **tornar o serviço ambiente e ciente de contexto**. As decisões estruturantes justificam-se assim: **processamento local** por *privacidade + latência + offline*; **gateway em ponte L2** por *descoberta espontânea/disponibilidade ambiente*; e **recursos acopláveis** por *extensibilidade*. A modelagem (sensores áudio-visuais, atuação informacional, dois gateways, fusão multimodal e classificação múltipla) decorre dessas decisões, e o risco principal (privacidade de dados visuais) é condizente com o escopo ampliado e mitigado pelo ambiente offline.
 
