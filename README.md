@@ -7,9 +7,9 @@
 ## Parte 1 — Compreensão do problema
 
 ### 1. Problema e usuários
-**Problema.** Grupos precisam colaborar — conversar, registrar reuniões, obter apoio de um assistente de IA, dispor de **legendas de fala em tempo real** e, adicionalmente, **extrair informação do ambiente visual** (ler quadros e documentos, estimar ocupação, descrever cenas, detectar objetos/eventos) — em locais **sem internet** ou onde a dependência da nuvem é indesejável por **privacidade, custo ou conectividade instável**. Isso é especialmente sensível no caso de imagens, que frequentemente contêm **rostos e documentos**; enviá-las à nuvem seria inaceitável em muitos contextos.
+**Problema.** Grupos precisam colaborar — conversar, registrar reuniões, obter apoio de um assistente de IA, dispor de **legendas de fala em tempo real** e, adicionalmente, **extrair informação do ambiente visual** (ler quadros e documentos, estimar ocupação, descrever cenas, detectar objetos/eventos) — em locais **sem internet** ou onde se busca **privacidade, custo ou conectividade instável**. Isso é especialmente sensível no caso de imagens, que frequentemente contêm **rostos e documentos**; enviá-las à nuvem seria inaceitável em muitos contextos.
 
-**Usuários.** (i) participantes de reuniões, aulas ou equipes de campo; (ii) pessoas com deficiência **auditiva** (legendas ao vivo) e **visual** (descrição de cenas/leitura de documentos por voz), reforçando o eixo de **acessibilidade**; (iii) um administrador que gerencia o appliance e provisiona dispositivos; (iv) dispositivos IoT sensores — microfones ESP32 e **câmeras (ESP32-CAM, webcams, câmeras de smartphones)**.
+**Usuários.** (i) participantes de aulas ou equipes de campo; (ii) pessoas com deficiência **auditiva** (legendas ao vivo) e **visual** (descrição de cenas/leitura de documentos por voz), reforçando o eixo de **acessibilidade**; (iii) um administrador que gerencia o appliance e provisiona dispositivos; (iv) dispositivos IoT sensores — microfones ESP32 e **câmeras (ESP32-CAM, webcams, câmeras de smartphones)**.
 
 **Situação de uso.** Um ambiente físico compartilhado no qual os presentes ingressam na rede local do appliance e passam a dispor, de modo ambiente, de colaboração, transcrição e **percepção visual** do espaço, sem configuração explícita.
 
@@ -70,8 +70,8 @@ flowchart LR
 ```
 
 ### 8. Classificação
-Classificações **múltiplas**, cada uma justificada:
-- **Internet das Coisas (IoT):** microfones e **câmeras** ESP32, autenticados por chave de API, são objetos conectados com identidade própria publicando dados.
+Classificações **múltiplas**:
+- **Internet das Coisas (IoT):** microfones e **câmeras** ESP32 únicos, autenticados por chave de API e publicam dados.
 - **Rede de sensores (WSN):** múltiplos sensores **áudio-visuais** distribuídos alimentam um coletor central; o *Network Map* é telemetria de sensores de rede.
 - **Aplicação ubíqua / ciente de contexto (multimodal):** serviço ambiente na LAN, acessível por qualquer dispositivo, que **percebe contexto auditivo e visual** e se adapta.
 - **Sistema ciber-físico (em sentido informacional):** laço **percepção → processamento → resposta** ligando o mundo físico (fala, cena, topologia de rede) ao digital; a atuação é informacional, caracterizando um CPS **parcial**.
