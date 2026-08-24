@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}IoT Devices · TowerAI{% endblock %}
+{% block content %}
+<div class="iot-page">
+  <header class="iot-head">
+    <a class="btn" href="{{ url_for('chat.index') }}">← Chat</a>
+    <h1>IoT audio devices</h1>
+  </header>
+
+  {% if new_key %}
+  <div class="keybox">
+    <strong>API key for “{{ new_name }}” — copy it now, it won't be shown again:</strong>
+    <code class="apikey">{{ new_key }}</code>
+    <details>
+      <summary>How a device uses it</summary>
+<pre>
+# Batch: send a WAV (or raw PCM16 mono) and get text back
+curl -X POST "http://TOWER_HOST:PORT/api/stt/transcribe?room=general" \
+     -H "Authorization: Bearer {{ new_key }}" \
+     --data-binary @clip.wav
+
+# Streaming: open a WebSocket and send 16 kHz PCM16 mono frames
+#   ws://TOWER_HOST:PORT/api/stt/stream?key={{ new_key }}&room=general
+#   -> receives JSON: {"type":"partial|final","speaker":"...","text":"..."}
+</pre>
+    </details>
+  </div>
+  {% endif %}
+
+  <form class="iot-new" method="post" action="{{ url_for('iot.create') }}">
+    <input name="name" placeholder="Device name (e.g. hall-mic-1)" maxlength="64" required>
+    <input name="room" placeholder="Default room (optional)" maxlength="32">
+    <button class="btn primary" type="submit">Create device key</button>
+  </form>
+
+  <table class="iot-table">
+    <thead><tr><th>Device</th><th>Room</th><th>Last seen</th><th></th></tr></thead>
+    <tbody>
+      {% for d in devices %}
+      <tr>
+        <td>{{ d['name'] }}</td>
+        <td>{{ d['room'] or '—' }}</td>
+        <td class="muted">{{ d['last_seen']|int if d['last_seen'] else 'never' }}</td>
+        <td>
+          <form method="post" action="{{ url_for('iot.revoke', device_id=d['id']) }}"
+                onsubmit="return confirm('Revoke this device key?');">
+            <button class="btn danger" type="submit">Revoke</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="muted">No devices yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

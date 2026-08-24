@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Network Map · TowerAI{% endblock %}
+{% block content %}
+<div class="iot-page netmap-page">
+  <header class="iot-head">
+    <a class="btn" href="{{ url_for('chat.index') }}">← Chat</a>
+    <h1>Network map</h1>
+    <button id="scanBtn" class="btn primary">🔍 Scan now</button>
+    <button id="anBtn" class="btn">🤖 Analyze with AI</button>
+    <span id="nmStatus" class="cap-status"></span>
+  </header>
+
+  <div id="summary" class="nm-summary"></div>
+  <div id="diff" class="nm-diff" hidden></div>
+  <div id="topo" class="nm-topo"></div>
+  <div id="devs"></div>
+  <div id="anOut" class="nm-analysis" hidden></div>
+
+  <details class="nm-history-wrap">
+    <summary>Scan history</summary>
+    <div id="history"></div>
+  </details>
+</div>
+
+<script>window.__SCAN__ = {{ scan|tojson }};</script>
+<script src="{{ url_for('static', filename='netmap.js') }}"></script>
+{% endblock %}

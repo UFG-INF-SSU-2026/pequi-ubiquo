@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ meeting['title'] or 'Meeting' }} · TowerAI{% endblock %}
+{% block content %}
+<div class="iot-page">
+  <header class="iot-head">
+    <a class="btn" href="{{ url_for('meetings.index') }}">← Meetings</a>
+    <h1>{{ meeting['title'] or 'Meeting' }}</h1>
+    <a class="btn" href="{{ url_for('meetings.export', meeting_id=meeting['id']) }}">⬇ Export .txt</a>
+  </header>
+  <p class="muted">Room #{{ meeting['room'] }} · {{ segments|length }} segments
+    {% if not meeting['ended_at'] %}· <strong style="color:#ff8080">● recording</strong>{% endif %}</p>
+
+  <div class="transcript-doc">
+    {% for s in segments %}
+      <div class="seg"><span class="sp">{{ s['speaker'] }}</span> {{ s['text'] }}</div>
+    {% else %}
+      <p class="muted">No transcript yet. Start Live Captions in this room while recording.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

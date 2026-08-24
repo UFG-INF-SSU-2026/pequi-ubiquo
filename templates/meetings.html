@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Meetings · TowerAI{% endblock %}
+{% block content %}
+<div class="iot-page">
+  <header class="iot-head">
+    <a class="btn" href="{{ url_for('chat.index') }}">← Chat</a>
+    <h1>Meeting transcripts</h1>
+  </header>
+
+  <form class="iot-new" method="get" action="{{ url_for('meetings.index') }}">
+    <input name="q" value="{{ q or '' }}" placeholder="Search all transcripts…">
+    <button class="btn primary" type="submit">Search</button>
+  </form>
+
+  {% if results is not none %}
+  <h2 class="muted">Search results for “{{ q }}” ({{ results|length }})</h2>
+  <table class="iot-table">
+    <tbody>
+      {% for r in results %}
+      <tr>
+        <td><a href="{{ url_for('meetings.view', meeting_id=r['meeting_id']) }}">{{ r['title'] or ('#'+r['room']) }}</a></td>
+        <td><strong>{{ r['speaker'] }}</strong>: {{ r['text'] }}</td>
+      </tr>
+      {% else %}
+      <tr><td class="muted">No matches.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <hr>
+  {% endif %}
+
+  <form class="iot-new" method="post" action="{{ url_for('meetings.start') }}">
+    <input name="room" placeholder="Room (e.g. general)" maxlength="32" required>
+    <input name="title" placeholder="Title (optional)" maxlength="120">
+    <button class="btn primary" type="submit">● Start recording</button>
+  </form>
+
+  <table class="iot-table">
+    <thead><tr><th>Meeting</th><th>Room</th><th>Started</th><th>Segments</th><th></th></tr></thead>
+    <tbody>
+      {% for m in meetings %}
+      <tr>
+        <td><a href="{{ url_for('meetings.view', meeting_id=m['id']) }}">{{ m['title'] or 'Meeting '+m['id']|string }}</a></td>
+        <td>#{{ m['room'] }}</td>
+        <td class="muted">{{ m['started_at']|int }}</td>
+        <td>{{ m['segment_count'] }}</td>
+        <td>
+          {% if not m['ended_at'] %}
+          <form method="post" action="{{ url_for('meetings.stop', meeting_id=m['id']) }}">
+            <button class="btn danger" type="submit">■ Stop</button>
+          </form>
+          {% else %}<span class="muted">ended</span>{% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="muted">No meetings yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

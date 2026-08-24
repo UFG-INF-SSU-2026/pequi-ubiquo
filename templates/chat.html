@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}#{{ room['name'] }} · TowerAI{% endblock %}
+{% block content %}
+<div class="chat-layout">
+  <aside class="sidebar">
+    <h2>Rooms</h2>
+    <ul class="room-list">
+      {% for r in rooms %}
+        <li class="{{ 'active' if r['name'] == room['name'] else '' }}">
+          <a href="{{ url_for('chat.room', name=r['name']) }}">#{{ r['name'] }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+    <form class="new-room" method="post" action="{{ url_for('chat.make_room') }}">
+      <input name="name" placeholder="new-room" maxlength="32">
+      <button class="btn" type="submit">+</button>
+    </form>
+    {% if 'transcription' in loaded_features %}
+      <a class="btn captions-link" href="{{ url_for('transcription.page', name=room['name']) }}">🟢 Live Captions</a>
+    {% endif %}
+    {% if 'iot' in loaded_features %}
+      <a class="btn" href="{{ url_for('iot.manage') }}">📟 IoT Devices</a>
+    {% endif %}
+    {% if 'meetings' in loaded_features %}
+      <a class="btn" href="{{ url_for('meetings.index') }}">📝 Meetings</a>
+    {% endif %}
+    {% if 'netmap' in loaded_features %}
+      <a class="btn" href="{{ url_for('netmap.page') }}">🌐 Network Map</a>
+    {% endif %}
+    <p class="hint">Tip: start a message with <code>@tower</code> to ask the AI.</p>
+  </aside>
+
+  <section class="chat-main"
+           data-room="{{ room['name'] }}"
+           data-me="{{ current_user['username'] }}"
+           data-assistant="{{ assistant_name }}">
+    <header class="room-head"># {{ room['name'] }}</header>
+    <div id="messages" class="messages"></div>
+    <form id="composer" class="composer">
+      <input id="msg" autocomplete="off" placeholder="Message #{{ room['name'] }}…" autofocus>
+      <label class="ai-toggle" title="Also ask the AI">
+        <input type="checkbox" id="askai"> AI
+      </label>
+      <button class="btn primary" type="submit">Send</button>
+    </form>
+  </section>
+</div>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+{% endblock %}

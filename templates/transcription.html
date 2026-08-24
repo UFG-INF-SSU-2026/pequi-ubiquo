@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Live Captions · #{{ room['name'] }}{% endblock %}
+{% block content %}
+<div class="captions-page" data-room="{{ room['name'] }}" data-me="{{ user['username'] }}">
+  <header class="cap-head">
+    <a class="btn" href="{{ url_for('chat.room', name=room['name']) }}">← #{{ room['name'] }}</a>
+    <h1>Live Captions</h1>
+    <button id="micBtn" class="btn primary">🎤 Start captioning</button>
+    {% if 'meetings' in loaded_features %}
+    <button id="recBtn" class="btn" data-room="{{ room['name'] }}">● Record</button>
+    {% endif %}
+    <span id="capStatus" class="cap-status">connecting…</span>
+  </header>
+
+  <!-- aria-live so screen readers announce new lines too -->
+  <div id="transcript" class="transcript" aria-live="polite" aria-label="Live transcript"></div>
+  <div id="partial" class="partial" aria-live="assertive"></div>
+</div>
+<script src="{{ url_for('static', filename='transcription.js') }}"></script>
+{% if 'meetings' in loaded_features %}
+<script>
+// Record toggle: ties the meeting recorder to this room's live captions.
+(function () {
+  const btn = document.getElementById("recBtn");
+  const room = btn.dataset.room;
+  let meetingId = null;
+  const J = { "Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded" };
+  function paint(rec) {
+    btn.textContent = rec ? "■ Stop recording" : "● Record";
+    btn.classList.toggle("rec", rec);
+  }
+  fetch("/meetings/status?room=" + encodeURIComponent(room))
+    .then(r => r.json()).then(s => { meetingId = s.meeting_id; paint(s.recording); }).catch(() => {});
+  btn.addEventListener("click", async () => {
+    if (btn.classList.contains("rec")) {
+      await fetch("/meetings/" + meetingId + "/stop", { method: "POST", headers: J }).catch(() => {});
+      paint(false);
+    } else {
+      const r = await fetch("/meetings/start", { method: "POST", headers: J, body: "room=" + encodeURIComponent(room) });
+      const s = await r.json(); meetingId = s.meeting_id; paint(true);
+    }
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

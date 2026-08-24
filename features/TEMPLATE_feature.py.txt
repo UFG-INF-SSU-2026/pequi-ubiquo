@@ -1,0 +1,21 @@
+# Copy this to features/vision.py (or voice.py / transcription.py) to enable it.
+# Saved as .txt so it is NOT auto-imported until you intentionally rename it.
+
+from flask import Blueprint, request, jsonify, render_template
+from auth import login_required
+import llm   # local LLM client: llm.chat_completion(messages)
+import db    # persistence helpers, if you need them
+
+bp = Blueprint("example", __name__, url_prefix="/example")
+
+
+@bp.get("/")
+@login_required
+def home():
+    return jsonify(feature="example", status="ready")
+
+
+def register(app):
+    """Called automatically by app.register_features() if this file is named
+    after an entry in config.OPTIONAL_FEATURES."""
+    app.register_blueprint(bp)
