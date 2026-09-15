@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "author": "TowerAI - Marco 2 (base: Vinicius Silva Benevides)",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-potentiometer", "id": "pot1", "top": -120, "left": -190, "attrs": { "value": "0" } },
+    { "type": "wokwi-pushbutton", "id": "btn1", "top": 140, "left": -190, "attrs": { "color": "red", "label": "sensor off" } },
+    { "type": "wokwi-pushbutton", "id": "btn2", "top": 230, "left": -190, "attrs": { "color": "blue", "label": "rede" } },
+    { "type": "wokwi-pushbutton", "id": "btn3", "top": 320, "left": -190, "attrs": { "color": "green", "label": "reenviar" } },
+
+    { "type": "wokwi-led", "id": "ledv", "top": -130, "left": 230, "attrs": { "color": "green", "label": "falando" } },
+    { "type": "wokwi-led", "id": "leda", "top": -35, "left": 230, "attrs": { "color": "yellow", "label": "silencio" } },
+    { "type": "wokwi-led", "id": "ledr", "top": 60, "left": 230, "attrs": { "color": "red", "label": "falha" } },
+    { "type": "wokwi-led", "id": "ledn", "top": 155, "left": 230, "attrs": { "color": "blue", "label": "mqtt" } },
+
+    { "type": "wokwi-resistor", "id": "r1", "top": -105, "left": 145, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "r2", "top": -10, "left": 145, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "r3", "top": 85, "left": 145, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "r4", "top": 180, "left": 145, "attrs": { "value": "220" } }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+
+    [ "pot1:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "pot1:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "pot1:SIG", "esp:34", "green", [ "v0" ] ],
+
+    [ "esp:2", "r1:1", "green", [ "v0" ] ],
+    [ "r1:2", "ledv:A", "green", [ "v0" ] ],
+    [ "ledv:C", "esp:GND.2", "black", [ "v0" ] ],
+
+    [ "esp:4", "r2:1", "gold", [ "v0" ] ],
+    [ "r2:2", "leda:A", "gold", [ "v0" ] ],
+    [ "leda:C", "esp:GND.2", "black", [ "v0" ] ],
+
+    [ "esp:5", "r3:1", "red", [ "v0" ] ],
+    [ "r3:2", "ledr:A", "red", [ "v0" ] ],
+    [ "ledr:C", "esp:GND.2", "black", [ "v0" ] ],
+
+    [ "esp:23", "r4:1", "blue", [ "v0" ] ],
+    [ "r4:2", "ledn:A", "blue", [ "v0" ] ],
+    [ "ledn:C", "esp:GND.2", "black", [ "v0" ] ],
+
+    [ "btn1:1.l", "esp:15", "blue", [ "v0" ] ],
+    [ "btn1:2.l", "esp:GND.3", "black", [ "v0" ] ],
+    [ "btn2:1.l", "esp:19", "blue", [ "v0" ] ],
+    [ "btn2:2.l", "esp:GND.3", "black", [ "v0" ] ],
+    [ "btn3:1.l", "esp:18", "green", [ "v0" ] ],
+    [ "btn3:2.l", "esp:GND.3", "black", [ "v0" ] ]
+  ],
+  "serialMonitor": { "display": "terminal" },
+  "dependencies": {}
+}

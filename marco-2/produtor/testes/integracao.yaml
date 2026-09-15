@@ -1,0 +1,66 @@
+name: 'Marco 2 - produtor -> MQTT -> consumidor'
+version: 1
+author: 'TowerAI'
+# Precisa do consumidor rodando no mesmo broker e prefixo.
+# Cobre: entrega com ACK, retry com o mesmo eventId (duplicado) e queda de
+# rede com fila entregue na reconexao.
+# Os botoes sao soltos DEPOIS do wait-serial: o ESP32 imprime a reacao ainda
+# com o botao apertado, e wait-serial so enxerga linhas novas.
+steps:
+  - wait-serial: 'PRONTO'
+  - set-control:
+      part-id: pot1
+      control: position
+      value: 0.3333
+  - wait-serial: 'MQTT conectado'
+  - wait-serial: 'FILA - entregue'
+
+  # 1. decisao e atuacao: SILENCIO -> FALANDO, confirmado pelo consumidor
+  - set-control:
+      part-id: pot1
+      control: position
+      value: 0.7778
+  - wait-serial: 'estado=SILENCIO -> FALANDO'
+  - wait-serial: 'ACK <- aplicado'
+
+  # 2. resposta perdida + retry: mesmo eventId, consumidor nao aplica de novo
+  - delay: 500ms
+  - set-control:
+      part-id: btn3
+      control: pressed
+      value: 1
+  - wait-serial: 'REENVIAR'
+  - set-control:
+      part-id: btn3
+      control: pressed
+      value: 0
+  - wait-serial: 'ACK <- duplicado'
+
+  # 3. queda de rede: estado entra na fila, sai na reconexao
+  - set-control:
+      part-id: btn2
+      control: pressed
+      value: 1
+  - wait-serial: 'REDE DERRUBADA'
+  - set-control:
+      part-id: btn2
+      control: pressed
+      value: 0
+  - set-control:
+      part-id: pot1
+      control: position
+      value: 0.3333
+  - wait-serial: 'FILA + estado SILENCIO'
+  - delay: 4000ms
+  - set-control:
+      part-id: btn2
+      control: pressed
+      value: 1
+  - wait-serial: 'REDE RESTAURADA'
+  - set-control:
+      part-id: btn2
+      control: pressed
+      value: 0
+  - wait-serial: 'MQTT conectado'
+  - wait-serial: 'FILA - entregue'
+  - delay: 2000ms

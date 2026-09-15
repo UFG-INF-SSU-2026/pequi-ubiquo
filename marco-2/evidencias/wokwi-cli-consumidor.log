@@ -1,0 +1,31 @@
+﻿12:17:13.042  MQTT        consumidor da sala-204 iniciando (broker.hivemq.com:1883, prefixo ufg-ssu-2026/towerai)
+12:17:13.514  MQTT        conectado a broker.hivemq.com:1883
+12:17:13.518  MQTT        assinando ufg-ssu-2026/towerai/sala-204/telemetry/audio e ufg-ssu-2026/towerai/sala-204/status/+
+12:17:13.741  STATUS      mic-esp32-01 offline (retida pelo broker)  -> offline
+12:17:28.082  STATUS      mic-esp32-01 online  -> online
+12:17:28.086  SALA        dispositivo online
+12:17:28.087  SALA        [sala-204] mic=DESCONHECIDO dispositivo=online ata=FECHADA | aplicados=0 duplicados=0 atrasados=0 rejeitados=0 telemetria=0
+12:17:28.370  APLICADO    eventType=audio.state.changed sequence=1 attempt=1 state=SILENCIO value=-60.0 eventId=mic-esp32-01:73c6b3a2:1  -> media_abaixo_do_limiar_estavel
+12:17:28.371  ACK         aplicado -> mic-esp32-01:73c6b3a2:1
+12:17:28.372  SALA        mic DESCONHECIDO -> SILENCIO
+12:17:28.372  SALA        [sala-204] mic=SILENCIO dispositivo=online ata=FECHADA | aplicados=1 duplicados=0 atrasados=0 rejeitados=0 telemetria=0
+12:17:30.319  APLICADO    eventType=audio.state.changed sequence=2 attempt=1 state=FALANDO value=-20.0 eventId=mic-esp32-01:73c6b3a2:2  -> media_acima_do_limiar_estavel
+12:17:30.322  ACK         aplicado -> mic-esp32-01:73c6b3a2:2
+12:17:30.323  SALA        mic SILENCIO -> FALANDO
+12:17:30.324  SALA        ata FECHADA -> ABERTA (fala confirmada pelo microfone)
+12:17:30.324  SALA        [sala-204] mic=FALANDO dispositivo=online ata=ABERTA | aplicados=2 duplicados=0 atrasados=0 rejeitados=0 telemetria=0
+12:17:32.788  DUPLICADO   eventType=audio.state.changed sequence=2 attempt=2 state=FALANDO value=-20.0 eventId=mic-esp32-01:73c6b3a2:2  -> eventId ja processado (tentativa 2)
+12:17:32.789  ACK         duplicado -> mic-esp32-01:73c6b3a2:2
+12:17:33.626  STATUS      mic-esp32-01 offline  -> offline
+12:17:33.629  SALA        dispositivo offline (broker publicou o Last Will)
+12:17:33.630  SALA        mic FALANDO -> DESCONHECIDO
+12:17:33.631  SALA        ata ABERTA -> SUSPENSA (sem dado confiavel (DESCONHECIDO); falta de dado nao e silencio)
+12:17:33.631  SALA        [sala-204] mic=DESCONHECIDO dispositivo=offline ata=SUSPENSA | aplicados=2 duplicados=1 atrasados=0 rejeitados=0 telemetria=0
+12:17:41.046  STATUS      mic-esp32-01 online  -> online
+12:17:41.047  SALA        dispositivo online
+12:17:41.048  SALA        [sala-204] mic=DESCONHECIDO dispositivo=online ata=SUSPENSA | aplicados=2 duplicados=1 atrasados=0 rejeitados=0 telemetria=0
+12:17:41.336  APLICADO    eventType=audio.state.changed sequence=3 attempt=1 state=SILENCIO value=-60.0 eventId=mic-esp32-01:73c6b3a2:3  -> media_abaixo_do_limiar_estavel
+12:17:41.339  ACK         aplicado -> mic-esp32-01:73c6b3a2:3
+12:17:41.339  SALA        mic DESCONHECIDO -> SILENCIO
+12:17:41.340  SALA        ata SUSPENSA -> ENCERRANDO (silencio; fecha em 10 s se continuar)
+12:17:41.340  SALA        [sala-204] mic=SILENCIO dispositivo=online ata=ENCERRANDO | aplicados=3 duplicados=1 atrasados=0 rejeitados=0 telemetria=0

@@ -1,0 +1,67 @@
+﻿ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:1
+load:0x3fff0030,len:4876
+ho 0 tail 12 room 4
+load:0x40078000,len:16532
+load:0x40080400,len:3500
+entry 0x400805b4
+
+=== TowerAI / Marco 2 / produtor mic-esp32-01 ===
+bootId=3c65c1f9 broker=broker.hivemq.com:1883
+publica: ufg-ssu-2026/towerai/sala-204/telemetry/audio
+status : ufg-ssu-2026/towerai/sala-204/status/mic-esp32-01
+ACK    : ufg-ssu-2026/towerai/sala-204/ack/mic-esp32-01
+PRONTOWiFi: aguardando conexao...
+[2003] RESUMO estado=DESCONHECIDO media=-60.0 mqtt=desconectado pendentes=0 descartados=0 seq=0
+[2453] estado=DESCONHECIDO -> SILENCIO  media=-60.0 dBFS  razao=media_abaixo_do_limiar_estavel
+FILA + estado SILENCIO seq=1 (pendentes: 1)
+[4003] RESUMO estado=SILENCIO media=-60.0 mqtt=desconectado pendentes=1 descartados=0 seq=1
+WiFi conectado, IP 10.13.37.2
+MQTT: conectando a broker.hivemq.com...
+MQTT conectadoMQTT -> {"schemaVersion":1,"eventId":"mic-esp32-01:3c65c1f9:1","eventType":"audio.state.changed","deviceId":"mic-esp32-01","entityId":"sala-204","bootId":"3c65c1f9","eventTimeMs":2454,"sequence":1,"value":-60.0,"unit":"dBFS","state":"SILENCIO","reason":"media_abaixo_do_limiar_estavel","attempt":1}
+[6022] RESUMO estado=SILENCIO media=-60.0 mqtt=conectado pendentes=1 descartados=0 seq=1
+RETRY sem ACK em 2000 ms: seq=1
+MQTT -> {"schemaVersion":1,"eventId":"mic-esp32-01:3c65c1f9:1","eventType":"audio.state.changed","deviceId":"mic-esp32-01","entityId":"sala-204","bootId":"3c65c1f9","eventTimeMs":2454,"sequence":1,"value":-60.0,"unit":"dBFS","state":"SILENCIO","reason":"media_abaixo_do_limiar_estavel","attempt":2}
+[8031] RESUMO estado=SILENCIO media=-60.0 mqtt=conectado pendentes=1 descartados=0 seq=1
+[10031] RESUMO estado=SILENCIO media=-60.0 mqtt=conectado pendentes=1 descartados=0 seq=1
+RETRY sem ACK em 4000 ms: seq=1
+MQTT -> {"schemaVersion":1,"eventId":"mic-esp32-01:3c65c1f9:1","eventType":"audio.state.changed","deviceId":"mic-esp32-01","entityId":"sala-204","bootId":"3c65c1f9","eventTimeMs":2454,"sequence":1,"value":-60.0,"unit":"dBFS","state":"SILENCIO","reason":"media_abaixo_do_limiar_estavel","attempt":3}
+[12031] RESUMO estado=SILENCIO media=-60.0 mqtt=conectado pendentes=1 descartados=0 seq=1
+[14031] RESUMO estado=SILENCIO media=-60.0 mqtt=conectado pendentes=1 descartados=0 seq=1
+[16031] RESUMO estado=SILENCIO media=-60.0 mqtt=conectado pendentes=1 descartados=0 seq=1
+[18031] RESUMO estado=SILENCIO media=-60.0 mqtt=conectado pendentes=1 descartados=0 seq=1
+RETRY sem ACK em 8000 ms: seq=1
+MQTT -> {"schemaVersion":1,"eventId":"mic-esp32-01:3c65c1f9:1","eventType":"audio.state.changed","deviceId":"mic-esp32-01","entityId":"sala-204","bootId":"3c65c1f9","eventTimeMs":2454,"sequence":1,"value":-60.0,"unit":"dBFS","state":"SILENCIO","reason":"media_abaixo_do_limiar_estavel","attempt":4}
+[20031] RESUMO estado=SILENCIO media=-60.0 mqtt=conectado pendentes=1 descartados=0 seq=1
+[22031] RESUMO estado=SILENCIO media=-60.0 mqtt=conectado pendentes=1 descartados=0 seq=1
+[24031] RESUMO estado=SILENCIO media=-60.0 mqtt=conectado pendentes=1 descartados=0 seq=1
+MQTT: conectando a broker.hivemq.com...
+MQTT conectado
+MQTT -> {"schemaVersion":1,"eventId":"mic-esp32-01:3c65c1f9:1","eventType":"audio.state.changed","deviceId":"mic-esp32-01","entityId":"sala-204","bootId":"3c65c1f9","eventTimeMs":2454,"sequence":1,"value":-60.0,"unit":"dBFS","state":"SILENCIO","reason":"media_abaixo_do_limiar_estavel","attempt":5}
+[26036] RESUMO estado=SILENCIO media=-60.0 mqtt=conectado pendentes=1 descartados=0 seq=1
+ACK <- aplicado mic-esp32-01:3c65c1f9:1
+FILA - entregue seq=1 (pendentes: 0)
+[26537] estado=SILENCIO -> FALANDO  media=-20.0 dBFS  razao=media_acima_do_limiar_estavel
+FILA + estado FALANDO seq=2 (pendentes: 1)
+MQTT -> {"schemaVersion":1,"eventId":"mic-esp32-01:3c65c1f9:2","eventType":"audio.state.changed","deviceId":"mic-esp32-01","entityId":"sala-204","bootId":"3c65c1f9","eventTimeMs":26538,"sequence":2,"value":-20.0,"unit":"dBFS","state":"FALANDO","reason":"media_acima_do_limiar_estavel","attempt":1}
+ACK <- aplicado mic-esp32-01:3c65c1f9:2
+FILA - entregue seq=2 (pendentes: 0)
+MQTT -> {"schemaVersion":1,"eventId":"mic-esp32-01:3c65c1f9:3","eventType":"audio.level","deviceId":"mic-esp32-01","entityId":"sala-204","bootId":"3c65c1f9","eventTimeMs":27537,"sequence":3,"value":-20.0,"unit":"dBFS","state":"FALANDO","reason":"amostragem_periodica","attempt":1}
+[27986] estado=FALANDO -> FALHA_SENSOR  media=-20.0 dBFS  razao=sensor_nao_respondeu_300ms
+FILA + estado FALHA_SENSOR seq=4 (pendentes: 1)
+MQTT -> {"schemaVersion":1,"eventId":"mic-esp32-01:3c65c1f9:4","eventType":"audio.state.changed","deviceId":"mic-esp32-01","entityId":"sala-204","bootId":"3c65c1f9","eventTimeMs":27987,"sequence":4,"value":-20.0,"unit":"dBFS","state":"FALHA_SENSOR","reason":"sensor_nao_respondeu_300ms","attempt":1}
+[28036] RESUMO estado=FALHA_SENSOR media=-20.0 mqtt=conectado pendentes=1 descartados=0 seq=4
+ACK <- aplicado mic-esp32-01:3c65c1f9:4
+FILA - entregue seq=4 (pendentes: 0)
+[29486] estado=FALHA_SENSOR -> FALANDO  media=-20.0 dBFS  razao=media_acima_do_limiar_estavel
+FILA + estado FALANDO seq=5 (pendentes: 1)
+MQTT -> {"schemaVersion":1,"eventId":"mic-esp32-01:3c65c1f9:5","eventType":"audio.state.changed","deviceId":"mic-esp32-01","entityId":"sala-204","bootId":"3c65c1f9","eventTimeMs":29488,"sequence":5,"value":-20.0,"unit":"dBFS","state":"FALANDO","reason":"media_acima_do_limiar_estavel","attempt":1}
+ACK <- aplicado mic-esp32-01:3c65c1f9:5
+FILA - entregue seq=5 (pendentes: 0)
+[30036] RESUMO estado=FALANDO media=-20.0 mqtt=conectado pendentes=0 descartados=0 seq=5
+MQTT -> {"schemaVersion":1,"eventId":"mic-esp32-01:3c65c1f9:6","eventType":"audio.level","deviceId":"mic-esp32-01","entityId":"sala-204","bootId":"3c65c1f9","eventTimeMs":30486,"sequence":6,"value":-20.0,"unit":"dBFS","state":"FALANDO","reason":"amostragem_periodica","attempt":1}
+MQTT -> {"schemaVersion":1,"eventId":"mic-esp32-01:3c65c1f9:7","eventType":"device.heartbeat","deviceId":"mic-esp32-01","entityId":"sala-204","bootId":"3c65c1f9","eventTimeMs":30937,"sequence":7,"value":-20.0,"unit":"dBFS","state":"FALANDO","reason":"heartbeat","attempt":1}

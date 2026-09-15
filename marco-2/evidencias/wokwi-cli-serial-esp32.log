@@ -1,0 +1,47 @@
+﻿ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:1
+load:0x3fff0030,len:4876
+ho 0 tail 12 room 4
+load:0x40078000,len:16532
+load:0x40080400,len:3500
+entry 0x400805b4
+
+=== TowerAI / Marco 2 / produtor mic-esp32-01 ===
+bootId=73c6b3a2 broker=broker.hivemq.com:1883
+publica: ufg-ssu-2026/towerai/sala-204/telemetry/audio
+status : ufg-ssu-2026/towerai/sala-204/status/mic-esp32-01
+ACK    : ufg-ssu-2026/towerai/sala-204/ack/mic-esp32-01
+PRONTOWiFi: aguardando conexao...
+[2003] RESUMO estado=DESCONHECIDO media=-60.0 mqtt=desconectado pendentes=0 descartados=0 seq=0
+[2453] estado=DESCONHECIDO -> SILENCIO  media=-60.0 dBFS  razao=media_abaixo_do_limiar_estavel
+FILA + estado SILENCIO seq=1 (pendentes: 1)
+[4003] RESUMO estado=SILENCIO media=-60.0 mqtt=desconectado pendentes=1 descartados=0 seq=1
+WiFi conectado, IP 10.13.37.2
+MQTT: conectando a broker.hivemq.com...
+MQTT conectadoMQTT -> {"schemaVersion":1,"eventId":"mic-esp32-01:73c6b3a2:1","eventType":"audio.state.changed","deviceId":"mic-esp32-01","entityId":"sala-204","bootId":"73c6b3a2","eventTimeMs":2454,"sequence":1,"value":-60.0,"unit":"dBFS","state":"SILENCIO","reason":"media_abaixo_do_limiar_estavel","attempt":1}
+ACK <- aplicado mic-esp32-01:73c6b3a2:1
+FILA - entregue seq=1 (pendentes: 0)
+[5722] estado=SILENCIO -> FALANDO  media=-20.0 dBFS  razao=media_acima_do_limiar_estavel
+FILA + estado FALANDO seq=2 (pendentes: 1)
+MQTT -> {"schemaVersion":1,"eventId":"mic-esp32-01:73c6b3a2:2","eventType":"audio.state.changed","deviceId":"mic-esp32-01","entityId":"sala-204","bootId":"73c6b3a2","eventTimeMs":5724,"sequence":2,"value":-20.0,"unit":"dBFS","state":"FALANDO","reason":"media_acima_do_limiar_estavel","attempt":1}
+ACK <- aplicado mic-esp32-01:73c6b3a2:2
+FILA - entregue seq=2 (pendentes: 0)
+[6022] RESUMO estado=FALANDO media=-20.0 mqtt=conectado pendentes=0 descartados=0 seq=2
+REENVIAR (simula resposta perdida): mesmo eventId, tentativa 2
+MQTT -> {"schemaVersion":1,"eventId":"mic-esp32-01:73c6b3a2:2","eventType":"audio.state.changed","deviceId":"mic-esp32-01","entityId":"sala-204","bootId":"73c6b3a2","eventTimeMs":5724,"sequence":2,"value":-20.0,"unit":"dBFS","state":"FALANDO","reason":"media_acima_do_limiar_estavel","attempt":2}
+ACK <- duplicado mic-esp32-01:73c6b3a2:2
+-- REDE DERRUBADA: conexao fechada sem DISCONNECT --
+[7200] estado=FALANDO -> SILENCIO  media=-60.0 dBFS  razao=media_abaixo_do_limiar_estavel
+FILA + estado SILENCIO seq=3 (pendentes: 1)
+[8050] RESUMO estado=SILENCIO media=-60.0 mqtt=desconectado pendentes=1 descartados=0 seq=3
+[10050] RESUMO estado=SILENCIO media=-60.0 mqtt=desconectado pendentes=1 descartados=0 seq=3
+-- REDE RESTAURADA: reconectando --
+MQTT: conectando a broker.hivemq.com...
+MQTT conectadoMQTT -> {"schemaVersion":1,"eventId":"mic-esp32-01:73c6b3a2:3","eventType":"audio.state.changed","deviceId":"mic-esp32-01","entityId":"sala-204","bootId":"73c6b3a2","eventTimeMs":7201,"sequence":3,"value":-60.0,"unit":"dBFS","state":"SILENCIO","reason":"media_abaixo_do_limiar_estavel","attempt":1}
+ACK <- aplicado mic-esp32-01:73c6b3a2:3
+FILA - entregue seq=3 (pendentes: 0)
+[12089] RESUMO estado=SILENCIO media=-60.0 mqtt=conectado pendentes=0 descartados=0 seq=3

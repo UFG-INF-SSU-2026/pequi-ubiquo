@@ -1,0 +1,31 @@
+﻿14:06:12.697  MQTT        consumidor da sala-204 iniciando (broker.hivemq.com:1883, prefixo ufg-ssu-2026/towerai)
+14:06:16.628  MQTT        conectado a broker.hivemq.com:1883
+14:06:16.630  MQTT        assinando ufg-ssu-2026/towerai/sala-204/telemetry/audio e ufg-ssu-2026/towerai/sala-204/status/+
+14:06:16.854  STATUS      mic-esp32-01 online (retida pelo broker)  -> online
+14:06:16.855  SALA        dispositivo online
+14:06:16.856  SALA        [sala-204] mic=DESCONHECIDO dispositivo=online ata=FECHADA | aplicados=0 duplicados=0 atrasados=0 rejeitados=0 telemetria=0
+14:06:17.763  STATUS      mic-esp32-01 offline  -> offline
+14:06:17.766  SALA        dispositivo offline (broker publicou o Last Will)
+14:06:17.767  SALA        [sala-204] mic=DESCONHECIDO dispositivo=offline ata=FECHADA | aplicados=0 duplicados=0 atrasados=0 rejeitados=0 telemetria=0
+14:06:21.754  STATUS      mic-esp32-01 online  -> online
+14:06:21.755  SALA        dispositivo online
+14:06:21.755  SALA        [sala-204] mic=DESCONHECIDO dispositivo=online ata=FECHADA | aplicados=0 duplicados=0 atrasados=0 rejeitados=0 telemetria=0
+14:06:21.863  APLICADO    eventType=audio.state.changed sequence=1 attempt=5 state=SILENCIO value=-60.0 eventId=mic-esp32-01:3c65c1f9:1  -> media_abaixo_do_limiar_estavel
+14:06:21.864  ACK         aplicado -> mic-esp32-01:3c65c1f9:1
+14:06:21.865  SALA        mic DESCONHECIDO -> SILENCIO
+14:06:21.865  SALA        [sala-204] mic=SILENCIO dispositivo=online ata=FECHADA | aplicados=1 duplicados=0 atrasados=0 rejeitados=0 telemetria=0
+14:06:24.151  APLICADO    eventType=audio.state.changed sequence=2 attempt=1 state=FALANDO value=-20.0 eventId=mic-esp32-01:3c65c1f9:2  -> media_acima_do_limiar_estavel
+14:06:24.152  ACK         aplicado -> mic-esp32-01:3c65c1f9:2
+14:06:24.153  SALA        mic SILENCIO -> FALANDO
+14:06:24.153  SALA        ata FECHADA -> ABERTA (fala confirmada pelo microfone)
+14:06:24.153  SALA        [sala-204] mic=FALANDO dispositivo=online ata=ABERTA | aplicados=2 duplicados=0 atrasados=0 rejeitados=0 telemetria=0
+14:06:28.631  APLICADO    eventType=audio.state.changed sequence=4 attempt=1 state=FALHA_SENSOR value=-20.0 eventId=mic-esp32-01:3c65c1f9:4  -> sensor_nao_respondeu_300ms
+14:06:28.632  ACK         aplicado -> mic-esp32-01:3c65c1f9:4
+14:06:28.632  SALA        mic FALANDO -> FALHA_SENSOR
+14:06:28.633  SALA        ata ABERTA -> SUSPENSA (sem dado confiavel (FALHA_SENSOR); falta de dado nao e silencio)
+14:06:28.633  SALA        [sala-204] mic=FALHA_SENSOR dispositivo=online ata=SUSPENSA | aplicados=3 duplicados=0 atrasados=0 rejeitados=0 telemetria=1
+14:06:33.224  APLICADO    eventType=audio.state.changed sequence=5 attempt=1 state=FALANDO value=-20.0 eventId=mic-esp32-01:3c65c1f9:5  -> media_acima_do_limiar_estavel
+14:06:33.224  ACK         aplicado -> mic-esp32-01:3c65c1f9:5
+14:06:33.225  SALA        mic FALHA_SENSOR -> FALANDO
+14:06:33.225  SALA        ata SUSPENSA -> ABERTA (fala confirmada pelo microfone)
+14:06:33.225  SALA        [sala-204] mic=FALANDO dispositivo=online ata=ABERTA | aplicados=4 duplicados=0 atrasados=0 rejeitados=0 telemetria=1
