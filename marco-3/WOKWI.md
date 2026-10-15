@@ -12,7 +12,7 @@ Este guia usa **Wokwi dentro do VS Code**, com os arquivos que já estão neste 
 4. Pressione **F1**, digite **`Wokwi: Request a new License`** e selecione a ação.
 5. Autorize abrir o site do Wokwi, entre na sua conta e use **GET YOUR LICENSE**. Autorize o retorno ao VS Code e aguarde a confirmação da ativação.
 
-A extensão exige licença da sua conta Wokwi; a disponibilidade depende da modalidade de uso. Essa ativação é feita por você no site e no VS Code. O roteiro oficial está em [Getting Started with Wokwi for VS Code](https://docs.wokwi.com/vscode/getting-started). Não é necessário montar outro circuito nem criar um projeto web para seguir este guia.
+A extensão exige licença da sua conta Wokwi; a disponibilidade depende da modalidade de uso. No plano gratuito (Community), a página aberta pelo comando gera uma licença pessoal de 30 dias para uso não comercial; quando vencer, repita o comando. Essa ativação é feita por você no site e no VS Code. O roteiro oficial está em [Getting Started with Wokwi for VS Code](https://docs.wokwi.com/vscode/getting-started). Não é necessário montar outro circuito nem criar um projeto web para seguir este guia.
 
 ## 2. Preparar o firmware para a rede simulada
 
@@ -84,7 +84,7 @@ Agora use a interface do VS Code, mantendo o terminal anterior em execução:
 4. Pressione **F1** outra vez e execute **`Wokwi: Start Simulator`**.
 5. Aguarde abrir a aba do circuito: ESP32, um potenciômetro, os botões **sensor off**, **rede**, **reenviar** e quatro LEDs.
 
-Para este roteiro, use a ação **`Wokwi: Start Simulator`** da paleta F1. **F5 / Iniciar Depuração** segue o fluxo de debug do VS Code e pode aguardar um depurador antes de executar a placa. O `wokwi.toml` também inclui `gdbServerPort = 3333`, exigido quando o modo debug é acionado. Alterar esse TOML não exige recompilar o firmware: salve o arquivo e reinicie a simulação.
+Para este roteiro, use a ação **`Wokwi: Start Simulator`** da paleta F1. **F5 / Iniciar Depuração** segue o fluxo de debug do VS Code e pode aguardar um depurador antes de executar a placa. O `wokwi.toml` também inclui `gdbServerPort = 3333`, exigido quando o modo debug é acionado. Alterar esse TOML não exige recompilar o firmware: salve o arquivo e reinicie a simulação. No sentido inverso, recompilar o firmware com a simulação aberta faz a extensão recarregar a placa sozinha.
 
 O gateway privado já faz parte da extensão para VS Code. Neste caminho, não é preciso iniciar manualmente outro gateway. A configuração e os comandos são documentados em [Wokwi Project Configuration](https://docs.wokwi.com/vscode/project-config). O serviço Wokwi normalmente exige internet para executar a simulação; o broker e o relógio deste projeto continuam locais.
 
@@ -172,10 +172,12 @@ O download das ferramentas ESP32 pode ser grande; prepare isso antes da apresent
 
 ## Se você preferir o Wokwi no navegador
 
-O navegador com gateway público não alcança este broker local. Nesse caminho é necessário ter acesso ao **Private IoT Gateway** do Wokwi, conforme a modalidade da conta; siga o [guia oficial de rede](https://docs.wokwi.com/guides/esp32-wifi).
+O navegador com gateway público não alcança este broker local. Nesse caminho é necessário ter acesso ao **Private IoT Gateway** do Wokwi, conforme a modalidade da conta; siga o [guia oficial de rede](https://docs.wokwi.com/guides/esp32-wifi). Na conta gratuita, o editor recusa o gateway com *"This feature is only available for paying users"*.
 
 Será preciso iniciar o gateway no PC, habilitá-lo no editor web e usar o mesmo circuito/firmware provisionado para `host.wokwi.internal`. A disponibilidade de upload de firmware depende do plano. Este guia prioriza VS Code para reutilizar diretamente `diagram.json`, `wokwi.toml` e o build local, evitando copiar credenciais para um projeto web compartilhado.
 
 ## O que foi verificado e o que depende da sua conta
 
 A configuração e o build do Wokwi são preparados neste projeto. O relógio SNTP tem testes locais de protocolo e socket; o fluxo MQTT já tem testes reais de TLS, ACK, resumo e painel. **A ativação da licença e o início da simulação na sua conta Wokwi são etapas que você executa no VS Code.** Compilar o firmware e testar o relógio local, isoladamente, não comprovam uma simulação completa pelo gateway.
+
+Em 15/10/2026 a simulação completa foi executada por este guia, com licença do plano Community: conexão TLS com a conta `mic-esp32-01`, roteiro da seção 6 e revogação da conta (T10). O registro está em [evidências](evidencias/validacao.md#execução-do-firmware-no-wokwi).

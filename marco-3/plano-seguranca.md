@@ -43,10 +43,10 @@ TLS autentica o broker; o usuário/senha autentica o cliente e a ACL autoriza a�
 | 1. Derivação | copiar produtor, consumidor, injetor e contrato do marco 2; manter etapa anterior preservada | conhecer fronteira e regra da ata | concluída |
 | 2. Infraestrutura | Compose local; provisionamento de CA, certificado, hashes e quatro contas; sem `allow-all` | Docker e instalação inicial com internet | implementada e validada no PC |
 | 3. Identidade | tópicos `dev/<deviceId>/...`; comparar payload antes de ACK/status; fonte única por sala | ACLs da etapa 2 | implementada, testes de regra e broker aprovados |
-| 4. Clientes seguros | Python com contexto TLS obrigatório; ESP32 com `WiFiClientSecure`, credenciais e NTP local | CA e segredos provisionados | Python validado; firmware compilado para ESP32, execução física pendente |
+| 4. Clientes seguros | Python com contexto TLS obrigatório; ESP32 com `WiFiClientSecure`, credenciais e NTP local | CA e segredos provisionados | Python validado; firmware validado no Wokwi com gateway privado, placa física pendente |
 | 5. Informação útil | `Resumo` puro, tópico retido QoS 1, Last Will do consumidor; painel somente leitura com expiração | etapas 2–4 para integração | implementada e validada com sensor Python |
 | 6. Operação | guia de subida/parada/LAN, geração de firmware, revogação, rotação e alerta de 20 inválidos/60 s | etapas anteriores | documentada; acesso físico LAN/NTP requer preparação da sala |
-| 7. Aceite físico | sensor real, NTP da sala, queda de Wi-Fi, retorno e oito passos da demonstração | ESP32 ou Wokwi com gateway privado | roteiro pronto; execução depende do ambiente físico/simulador |
+| 7. Aceite físico | sensor real, NTP da sala, queda de Wi-Fi, retorno e oito passos da demonstração | ESP32 ou Wokwi com gateway privado | roteiro executado no Wokwi em 15/10/2026; placa física, NTP da sala e queda de Wi-Fi pendentes |
 
 A divisão da proposta pode ser mantida: Vinícius cuida de broker/firmware; Thiago de consumidor/resumo/painel; Samuel verifica ACK, retry e duplicação; Moisés verifica relógio, expiração e qualidade do dado. Todos devem explicar os controles e o fluxo inteiro na apresentação.
 
@@ -59,11 +59,11 @@ A divisão da proposta pode ser mantida: Vinícius cuida de broker/firmware; Thi
 | T4–T7, R7 | publicar em outra identidade, enviar ACK falso, assinar `#` e painel publicador são negados | `ferramentas/verificar_broker.py`; cada tentativa em sessão independente |
 | T8 | identidade divergente e status forjado não alteram estado nem produzem ACK | `consumidor/test_seguranca.py` |
 | T9 parcial | retry duplicado, abertura, silêncio, resumo final, painel e consumidor offline | `ferramentas/testar_fluxo.py`, broker real, sensor Python |
-| T9 completo | roteiro de oito passos, LEDs/fila/rede do ESP32 | `produtor/testes/*.yaml` e roteiro do README; requer firmware provisionado e ambiente de rede |
-| T10 | remover conta; encerrar sessão antiga; tentativa de conexão com perfil antigo recusada | `broker/gerenciar_acesso.py --revogar`, restart e tentativa do cliente |
+| T9 completo | roteiro de oito passos, LEDs/fila/rede do ESP32 | roteiro do README executado no Wokwi (VS Code, gateway privado), registrado em [evidências](evidencias/validacao.md#execução-do-firmware-no-wokwi); `produtor/testes/*.yaml` seguem dependentes de gateway local no `wokwi-cli` |
+| T10 | remover conta; encerrar sessão antiga; tentativa de conexão com perfil antigo recusada | `broker/gerenciar_acesso.py --revogar`, restart e tentativa do cliente; repetido com o ESP32 no Wokwi |
 | R1–R4 | fala/silêncio, lacuna, pausa e periodicidade | `consumidor/test_resumo.py` |
 | R5–R6 | Last Will real após processo morto e leitura tardia do retained | `ferramentas/testar_fluxo.py` |
-| R8 | painel acompanha demo física | roteiro no README, pendente de ambiente físico/simulador |
+| R8 | painel acompanha demo física | executado no Wokwi; demonstração com a placa física pendente |
 | adicional painel | retained velho/futuro/versão inválida e contagem do tempo restante | `painel/test_painel.py` |
 
 Os [resultados de validação](evidencias/validacao.md) registram o que foi efetivamente executado. Teste lógico, compilação e teste com hardware são evidências diferentes. Uma publicação QoS 0 negada pode ser descartada ou causar desconexão sem erro detalhado para o produtor; o teste ativo usa MQTT 5 para observar PUBACK/SUBACK, enquanto o firmware continua MQTT 3.1.1.

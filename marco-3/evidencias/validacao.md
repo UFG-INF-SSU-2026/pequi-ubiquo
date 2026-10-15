@@ -80,13 +80,68 @@ Foi verificado que o serviço de hora do Windows ocupa UDP 123 neste PC e não o
 
 Verificações executadas: compilação do build Wokwi com ESP32 core 3.3.2 e PubSubClient 2.8; três testes de protocolo/socket do relógio aprovados; consulta real a `127.0.0.1:4123/UDP` com timestamp consistente e porta liberada ao encerrar; os 34 testes de lógica da aplicação continuam aprovados; caminhos de firmware/ELF no TOML conferidos.
 
-**Ainda depende da conta Wokwi do usuário:** ativação da extensão/licença e execução do simulador através do gateway. Não foi declarada uma simulação completa aprovada apenas com base na compilação e na consulta NTP local.
+**Ainda depende da conta Wokwi do usuário:** ativação da extensão/licença e execução do simulador através do gateway. Não foi declarada uma simulação completa aprovada apenas com base na compilação e na consulta NTP local. Essa execução foi feita depois, em outro PC: ver [Execução do firmware no Wokwi](#execução-do-firmware-no-wokwi).
+
+## Execução do firmware no Wokwi
+
+Executada em **15/10/2026, à tarde**, no PC Windows do Vinícius, com o código desta pasta (`main` em `ce2a45c`) e provisionamento próprio desta máquina (`executar.py preparar`: CA, contas e broker gerados aqui). Antes da simulação, as verificações da seção anterior foram repetidas nesta máquina e aprovadas: 29 + 5 testes de lógica, 3 testes do relógio local, 4 testes ativos do broker e `ferramentas/testar_fluxo.py`.
+
+| Componente | Versão/configuração |
+|---|---|
+| Python / Docker | 3.13.14 em `.venv` / Docker Desktop 29.6.1, motor Linux |
+| Simulador | Wokwi for VS Code 4.0.0, com o gateway privado embutido na extensão |
+| Licença | pessoal de 30 dias do plano Community (gratuito), gerada em wokwi.com/license |
+| Firmware | `compilar_produtor.py --wokwi`, core ESP32 3.3.2 e PubSubClient 2.8.0: 1.014.223 bytes (77%) |
+| Lado do PC | `executar.py esp32 --wokwi`: broker em `127.0.0.1:8883`, NTP local em `127.0.0.1:4123/UDP`, consumidor e painel |
+
+O Wokwi no navegador não serve com a conta gratuita: ao ativar o gateway privado, o editor responde *"This feature is only available for paying users"*. Por isso a execução usou a extensão do VS Code, que alcança o broker local por `host.wokwi.internal`.
+
+### Roteiro com a placa simulada
+
+Horários do relógio do consumidor. O `eventId` do boot era `mic-esp32-01:07d8e679:<sequence>`.
+
+| Hora | Ação no circuito | Observado no consumidor e no painel |
+|---|---|---|
+| 15:29:53 | placa liga | `STATUS online` pela conta `mic-esp32-01` sobre TLS; primeiro estado (`SILENCIO`) aplicado; tentativa 2 logo em seguida, `DUPLICADO` (ver correção abaixo) |
+| 15:32:49 | potenciômetro alto | microfone `FALANDO`; ata `FECHADA → ABERTA`; painel "Ata ABERTA: reunião detectada" |
+| 15:33:13 | botão **reenviar** | mesmo `eventId`, tentativa 2: `DUPLICADO` e ACK `duplicado`; ata inalterada |
+| 15:33:19 e 15:33:49 | — | resumo periódico a cada 30 s com a ata aberta (R4) |
+| 15:34:06 | botão **rede** | broker publica o Last Will `offline`; microfone `DESCONHECIDO`; ata `SUSPENSA`; painel alerta falta de dados |
+| 15:34:29 | **rede** de novo | reconexão TLS; o heartbeat ressincroniza `FALANDO`; ata `ABERTA` com qualidade `INCOMPLETA` |
+| 15:35:25 | segurar **sensor off** | `FALHA_SENSOR` (`sensor_nao_respondeu_300ms`); ata `SUSPENSA`, não `FECHADA` |
+| 15:35:28 | soltar | `FALANDO`; ata `ABERTA` |
+| 15:35:50 | **rede**, potenciômetro sem rede | Last Will; ata `SUSPENSA`; três mudanças de estado ficam na fila do ESP32 |
+| 15:36:15 | **rede** de novo | fila entregue em ordem (`:218`, `:219`, `:220`), todos com ACK; tentativa 2 de `:218` respondida `DUPLICADO` |
+| 15:36:26 | 10 s de silêncio | ata `FECHADA`; painel: "Resumo final: duração=217.172s, fração de fala=0.936, qualidade=INCOMPLETA" |
+
+A qualidade `INCOMPLETA` é esperada: as duas quedas de rede e a falha do sensor somaram mais de 10% da sessão sem dado confiável.
+
+### T10: revogação com a placa conectada
+
+| Hora | Ação | Observado |
+|---|---|---|
+| 15:47:04 | `gerenciar_acesso.py mic-esp32-01 --revogar` | conta removida de `credentials.xml` |
+| 15:47:17 | depois da releitura do RBAC (10 s) | a placa continua conectada: a revogação não derruba a sessão existente |
+| 15:47:33 | `docker compose -f marco-3/broker/compose.yaml restart` | consumidor e painel reconectam às 15:47:48; a placa não |
+| ~15:48:50 | assinar `dev/mic-esp32-01/telemetry` e `status` com a conta do consumidor por 15 s | nenhuma telemetria (conectada, a placa envia heartbeat a cada 5 s); só o status retido `offline` do boot `07d8e679` |
+| 15:49:51–15:50:03 | portas remotas das conexões em `8883` | consumidor e painel mantêm portas fixas; a terceira muda a cada ~3 s: a placa tenta reconectar no intervalo `RECONEXAO_MS` e é recusada |
+| 15:50:18 | `gerenciar_acesso.py mic-esp32-01 --rotacionar` e `compilar_produtor.py --wokwi` | a extensão recarregou o firmware sozinha; às 15:52:19 `STATUS online` com a senha nova, e o consumidor detectou o reinício (`bootId 07d8e679 → d28f0973`) |
+
+O monitor serial da placa não foi capturado nesta etapa; a recusa foi observada pelo lado do broker.
+
+### Correção no firmware
+
+Na primeira conexão e em cada reconexão com estado na fila, o consumidor recebia a tentativa 2 logo depois da 1. Não havia efeito na ata, porque a deduplicação respondia `duplicado`. Causa: `processarFila()` gravava `enviadoEmMs` com o `agora` lido no início do `loop()`, antes de `conectar()`. Como o handshake TLS no simulador leva mais que a espera inicial de 2 s, o loop seguinte já via a espera estourada. Correção: `enviadoEmMs = millis()`. Depois de recompilar, o boot das 15:52:20 teve o primeiro estado `APLICADO` sem tentativa 2. A reconexão com fila depois da correção ainda não foi repetida.
+
+### Estado deixado no PC do Vinícius
+
+Broker local ativo em `127.0.0.1:8883`. Conta `mic-esp32-01` rotacionada: a senha nova está só nos perfis locais e no firmware do Wokwi, fora do Git. O log da sessão ficou em `evidencias/wokwi-esp32-2026-10-15.log`, também fora do Git.
 
 ## O que ainda precisa ser validado na sala
 
-- Execução no ESP32 físico ou Wokwi com gateway privado e relógio local acessível.
+- Execução no ESP32 físico. O Wokwi com gateway privado foi executado: ver [Execução do firmware no Wokwi](#execução-do-firmware-no-wokwi).
 - NTP do Raspberry Pi/PC e comportamento com horário incorreto/indisponível no sensor.
-- Roteiro completo dos oito passos com botões, LEDs, queda real de Wi-Fi e reconexão da fila sobre TLS.
+- Queda real de Wi-Fi no hardware: no Wokwi, o botão **rede** fecha apenas a conexão MQTT. No simulador também não foi repetido o passo do consumidor fora do ar (retry com 2 s, 4 s e 8 s).
 - Operação pela interface LAN com IP/DNS/SAN da instalação e regras locais de firewall.
 - Operação completamente offline com hardware real, após provisionar dependências e relógio.
 - Encerramento normal por Ctrl+C está implementado para publicar indisponibilidade, mas a prova de integração automatizada exercita a **queda abrupta**.

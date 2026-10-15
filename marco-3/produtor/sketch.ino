@@ -272,7 +272,10 @@ void processarFila(uint32_t agora) {
                ev.valor, ev.estado, ev.razao, ev.tentativas);
   publicar(buf);
   cabecaEnviada = true;
-  enviadoEmMs = agora;
+  // millis(), e nao o agora do inicio do loop: logo apos conectar(), o
+  // handshake TLS ja consumiu segundos, e o proximo loop veria a espera
+  // estourada e reenviaria a tentativa 2 sem necessidade.
+  enviadoEmMs = millis();
 }
 
 // Le "chave":"valor" de um JSON simples, sem biblioteca. Basta para o ACK,

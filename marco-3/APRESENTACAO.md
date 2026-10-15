@@ -91,7 +91,7 @@ O insight representa atividade sonora classificada, sem comprovar fala humana ou
 
 As duas propostas principais foram materializadas: comunicação protegida com identidades e permissões, e um resumo derivado consumido por outro componente. A documentação de proposta explica a intenção; os arquivos executáveis mostram o comportamento entregue.
 
-O registro de validação documenta 34 testes de lógica do consumidor/painel, quatro testes ativos do broker e uma integração real com produtor Python autenticado. Foram verificadas recusas de CA, hostname, credenciais e operações não autorizadas, além de deduplicação, resumo retido e Last Will. O firmware também foi compilado. Esses resultados não comprovam, por si, uma execução completa no ESP32 físico ou no Wokwi.
+O registro de validação documenta 34 testes de lógica do consumidor/painel, quatro testes ativos do broker e uma integração real com produtor Python autenticado. Foram verificadas recusas de CA, hostname, credenciais e operações não autorizadas, além de deduplicação, resumo retido e Last Will. O firmware também rodou no Wokwi, pelo gateway privado da extensão do VS Code, contra o broker local: conectou com TLS e conta própria, passou pelo roteiro de fala, reenvio, queda com Last Will, fila, falha do sensor e resumo final, e deixou de reconectar quando sua conta foi revogada (T10). Falta a execução no ESP32 físico.
 
 Permanecem limites claros: estado em memória, um microfone por sala e alerta administrativo após 20 mensagens inválidas em 60 segundos, sem quarentena automática. Os próximos passos incluem validar o sensor real e a rede da sala, persistir sessões e integrar a decisão ao Flask. mTLS e assinatura ponta a ponta são possibilidades adicionais, ainda não implementadas.
 
