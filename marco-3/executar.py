@@ -5,6 +5,7 @@ Todos os caminhos partem deste arquivo, independentemente da pasta do terminal.
 Certificados/contas existentes nunca são regenerados para iniciar uma demo.
 """
 import argparse
+from contextlib import ExitStack
 import importlib.metadata
 import os
 import shutil
@@ -250,7 +251,8 @@ def executar_fluxo(host, com_esp32=False):
         painel = iniciar("PAINEL", "painel/painel.py", "painel-sala-204")
         if com_esp32:
             mostrar("\nAguardando o ESP32 publicar. Ligue a placa ou inicie o Wokwi com gateway privado.")
-            mostrar("Rede, CA, broker e NTP da placa: siga a seção ESP32/Wokwi do README do Marco 3.")
+            mostrar("Passo a passo do simulador: marco-3/WOKWI.md.")
+            mostrar("Para usar o relógio deste PC no Wokwi: Ctrl+C e execute 'python marco-3/executar.py esp32 --wokwi'.")
             while consumidor.poll() is None and painel.poll() is None:
                 time.sleep(0.5)
             raise Orientacao("Um dos clientes encerrou inesperadamente. Veja as mensagens acima.")
@@ -323,6 +325,8 @@ def main():
         parser.add_argument("--broker", default="localhost", help="endereço local do broker; padrão localhost")
         if acao == "preparar":
             parser.add_argument("--ip", action="append", default=[], help="SAN LAN no primeiro provisionamento")
+        if acao == "esp32":
+            parser.add_argument("--wokwi", action="store_true", help="inclui relógio NTP local para o simulador")
     sub.add_parser("parar", help="parar o broker preservando certificados e dados")
     sub.add_parser("logs", help="acompanhar o log do broker (Ctrl+C volta ao terminal)")
     args = ap.parse_args()
@@ -348,7 +352,23 @@ def main():
         if args.acao == "preparar":
             mostrar("\nPreparação concluída. Agora execute: python marco-3/executar.py demo")
         else:
-            executar_fluxo(args.broker, args.acao == "esp32")
+            with ExitStack() as recursos:
+                if getattr(args, "wokwi", False):
+                    if not (MARCO / "produtor/build-wokwi/sketch.ino.merged.bin").is_file():
+                        raise Orientacao("Compile primeiro o firmware da simulação: "
+                                         "python marco-3/ferramentas/compilar_produtor.py --wokwi. "
+                                         "Passo a passo em marco-3/WOKWI.md.")
+                    from ferramentas.ntp_local import RelogioLocal
+                    try:
+                        recursos.enter_context(RelogioLocal())
+                    except OSError as erro:
+                        raise Orientacao("Não foi possível abrir NTP em 127.0.0.1:4123/UDP. "
+                                         "A porta pode estar ocupada ou sem permissão. "
+                                         "Consulte marco-3/WOKWI.md; não desligue a validação TLS. "
+                                         f"Detalhe: {erro}") from None
+                    mostrar("[OK] NTP local ativo em 127.0.0.1:4123/UDP; usa a hora deste PC.")
+                    mostrar("No VS Code: selecione marco-3/produtor/wokwi.toml e inicie o simulador.")
+                executar_fluxo(args.broker, args.acao == "esp32")
     elif args.acao == "parar":
         verificar_docker()
         rodar(COMPOSE + ["stop"])

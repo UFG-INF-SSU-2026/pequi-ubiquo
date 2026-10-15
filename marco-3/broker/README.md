@@ -70,6 +70,8 @@ Libere TCP 8883 **somente na rede privada da sala** no firewall local, se necess
 
 O TLS verifica validade temporal do certificado. O firmware consulta `NTP_SERVIDOR` e aguarda horário plausível antes de conectar. Use o serviço NTP da sala previsto na Atividade 02; `pool.ntp.org` não é dependência desta etapa.
 
+**Para a simulação neste PC**, há um caminho pronto em [WOKWI.md](../WOKWI.md): compile com `--wokwi` e execute `python marco-3/executar.py esp32 --wokwi`. Esse modo serve a hora do PC em loopback UDP **4123**, consultada pelo build simulado via `host.wokwi.internal`. A porta própria permite conviver com o serviço de hora do Windows na 123. A preparação da rede física com chrony, descrita a seguir, continua separada da simulação.
+
 No Raspberry Pi com Debian/Raspberry Pi OS, prepare o serviço `chrony` e uma fonte de horário correta. As diretivas são descritas no [manual oficial do chrony](https://chrony-project.org/doc/4.6/chrony.conf.html). Exemplo de configuração em `/etc/chrony/chrony.conf`: `allow 192.168.50.0/24`; para servir a hora local mesmo quando isolado, `local stratum 10`. Após configurar, reinicie `chrony` e confira `chronyc tracking` e a data do Pi. Em rede isolada, um relógio errado continuará errado: ajuste a hora antes da demo ou use RTC/fonte confiável. UDP 123 deve ser alcançável pelos sensores. O script do broker não instala nem administra o relógio da rede.
 
 ## Revogar e rotacionar sem trocar a CA

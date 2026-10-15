@@ -164,6 +164,17 @@ O consumidor mostra eventos aplicados/duplicados/atrasados/rejeitados e publica 
 
 ## ESP32 físico e Wokwi
 
+**Quer começar pelo Wokwi?** Siga o [passo a passo completo do simulador](WOKWI.md): instalação da extensão, licença, compilação, relógio local, seleção do circuito e demonstração com botões. A opção 4 prepara o lado do PC; a simulação é aberta separadamente no VS Code.
+
+Para a simulação, os dois comandos principais são:
+
+```powershell
+python marco-3/ferramentas/compilar_produtor.py --wokwi
+python marco-3/executar.py esp32 --wokwi
+```
+
+O segundo comando inclui o relógio local na UDP 4123, para conviver com o serviço de hora do Windows. Depois, no VS Code: **F1 → Wokwi: Select Config File → `marco-3/produtor/wokwi.toml`** e **F1 → Wokwi: Start Simulator**. O [guia Wokwi](WOKWI.md) explica cada etapa e a ativação da extensão.
+
 Comece pela demonstração sem placa para conferir a instalação. Para acompanhar a placa configurada, use a opção **4** do menu ou, da raiz:
 
 ```powershell
@@ -187,11 +198,11 @@ python marco-3/consumidor/consumidor.py --config marco-3/broker/local/consumidor
 
 Para hardware na LAN, o iniciador também aceita `python marco-3/executar.py esp32 --broker 192.168.50.2`, usando o endereço efetivamente configurado no certificado e no bind do Docker. No primeiro provisionamento para essa rede, pode-se usar `python marco-3/executar.py preparar --ip 192.168.50.2 --broker 192.168.50.2`, depois de definir `MQTT_BIND_IP` conforme o guia do broker. `--ip` só é aplicado quando os certificados ainda não existem.
 
-O compilador gera `produtor/build/sketch.ino.merged.bin` e `.elf`, usados por `wokwi.toml`. **Os binários antigos do marco 2 não foram reaproveitados:** não têm TLS e apontam para o broker público. Os novos binários contêm a senha provisionada e ficam fora do Git.
+O compilador padrão gera `produtor/build/sketch.ino.merged.bin` e `.elf` para a placa física. Com `--wokwi`, gera um build separado em **`produtor/build-wokwi/`**, usado por `wokwi.toml`, com rede e relógio da simulação. **Os binários antigos do marco 2 não foram reaproveitados:** não têm TLS e apontam para o broker público. Os novos binários contêm a senha provisionada e ficam fora do Git.
 
 O Wokwi web com gateway público não alcança o broker deste PC. Use **Private IoT Gateway** (recurso pago no Wokwi web), habilite-o na simulação e configure `MQTT_BROKER` como `host.wokwi.internal`; esse nome já está no certificado. O Wokwi para VS Code inclui o gateway privado. Consulte as [instruções oficiais de rede](https://docs.wokwi.com/guides/esp32-wifi) e a [configuração no VS Code](https://docs.wokwi.com/vscode/project-config). O simulador/serviço de compilação pode exigir internet: a prova de operação offline completa deve ser feita com hardware real.
 
-Sem gateway privado, a demonstração local com o injetor continua disponível. Não exponha o broker na internet para contornar essa limitação. O NTP da sala deve estar acessível também pelo gateway; sem horário válido o firmware aguarda e mantém os eventos na fila, sem desligar a validação TLS.
+Sem gateway privado, a demonstração local com o injetor continua disponível. Não exponha o broker na internet para contornar essa limitação. No build do Wokwi, `esp32 --wokwi` fornece horário do PC pelo gateway; na placa física, use o NTP da sala. Sem horário válido, o firmware aguarda e mantém os eventos na fila, sem desligar a validação TLS.
 
 ## Verificação
 

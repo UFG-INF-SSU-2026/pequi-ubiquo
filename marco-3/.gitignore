@@ -2,4 +2,5 @@ broker/local/
 broker/downloads/
 produtor/segredos.h
 produtor/build/
+produtor/build-wokwi/
 evidencias/*.log

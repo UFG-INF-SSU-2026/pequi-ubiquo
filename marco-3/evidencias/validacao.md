@@ -72,6 +72,16 @@ O Arduino CLI e as dependências de compilação foram preparados no cache `.tmp
 
 O `segredos.h` gerado ainda contém **campos de Wi-Fi e NTP a ajustar para a sala**. Compilar não comprova conectividade física. Os binários contêm o segredo provisionado e permanecem fora do Git. Após alterar rede, NTP, endereço ou credencial do ESP32, recompilar e regravar; os binários desta execução não devem ser compartilhados.
 
+### Preparação específica para Wokwi
+
+O guia [WOKWI.md](../WOKWI.md) foi adicionado para ligar a opção 4 à execução do simulador. O compilador agora aceita `--wokwi`, usa o toolchain local quando disponível e gera `produtor/build-wokwi/`, com Wi-Fi `Wokwi-GUEST` e broker/relógio em `host.wokwi.internal`. Esse build temporário não altera o header da placa física; `produtor/wokwi.toml` aponta para os binários separados, ignorados pelo Git.
+
+Foi verificado que o serviço de hora do Windows ocupa UDP 123 neste PC e não oferece NTP servidor no loopback. A integração do simulador usa **UDP 4123**, restrita a `127.0.0.1`, com cliente SNTP de laboratório no build Wokwi. `esp32 --wokwi` administra o relógio junto com os clientes MQTT. O Windows não teve serviço, registro ou firewall reconfigurados.
+
+Verificações executadas: compilação do build Wokwi com ESP32 core 3.3.2 e PubSubClient 2.8; três testes de protocolo/socket do relógio aprovados; consulta real a `127.0.0.1:4123/UDP` com timestamp consistente e porta liberada ao encerrar; os 34 testes de lógica da aplicação continuam aprovados; caminhos de firmware/ELF no TOML conferidos.
+
+**Ainda depende da conta Wokwi do usuário:** ativação da extensão/licença e execução do simulador através do gateway. Não foi declarada uma simulação completa aprovada apenas com base na compilação e na consulta NTP local.
+
 ## O que ainda precisa ser validado na sala
 
 - Execução no ESP32 físico ou Wokwi com gateway privado e relógio local acessível.

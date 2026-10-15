@@ -29,7 +29,7 @@
  *
  * LIMITACOES DECLARADAS
  *   - o potenciometro nao e microfone; o valor em dBFS e ficticio
- *   - eventTimeMs = millis() desde o boot, nao e hora real (sem NTP)
+ *   - eventTimeMs = millis() desde o boot; o NTP so acerta o relogio do TLS
  *   - exige broker LOCAL com TLS, credenciais e ACL; nao ha fallback publico
  *   - exige CA confiavel e horario valido via NTP local antes de conectar
  *   - a PubSubClient so publica em QoS 0; a garantia vem do ACK de aplicacao
@@ -41,6 +41,10 @@
 #include <time.h>
 #include "segredos.h" // CA, credenciais e enderecos provisionados; fora do Git
 #include <PubSubClient.h>
+#ifdef TOWERAI_WOKWI_NTP_PORTA
+#include <WiFiUdp.h>
+#include <sys/time.h>
+#endif
 
 // ---------------------------- configuracao ---------------------------------
 // Os segredos e o hostname (presente no SAN do certificado) vem de segredos.h.
@@ -342,6 +346,76 @@ void reenviarUltimoConfirmado() {
 }
 
 // ------------------------------- rede --------------------------------------
+#ifdef TOWERAI_WOKWI_NTP_PORTA
+// Somente no build do simulador: consulta SNTP ao PC em uma porta própria.
+// O SNTP nativo usa 123 fixa, já ocupada pelo Windows neste laboratório. O
+// protocolo continua sendo NTP; a configuração física mantém configTime().
+// A consulta não bloqueia o sensoriamento. TLS só inicia após resposta válida.
+bool sincronizarRelogioWokwi(uint32_t agora) {
+  static WiFiUDP udp;
+  static bool iniciado = false;
+  static bool aguardando = false;
+  static uint32_t enviadoEm = 0;
+  static uint8_t desafio[8];
+  static IPAddress servidor;
+
+  if (time(nullptr) >= 1735689600) return true;
+  if (!iniciado) {
+    if (!WiFi.hostByName(NTP_SERVIDOR, servidor) || !udp.begin(0)) return false;
+    iniciado = true;
+  }
+
+  if (udp.parsePacket() > 0) {
+    uint8_t resposta[48] = {};
+    int lidos = udp.read(resposta, sizeof resposta);
+    // Consumir inclusive datagramas incompletos evita prender o buffer UDP
+    // e impedir que a proxima resposta valida seja recebida.
+    while (udp.available()) udp.read();
+    // Confirmar servidor, modo, versão e nonce evita aceitar uma resposta
+    // velha ou de outra consulta. O tempo local não é autenticado por NTP:
+    // a confiança é a mesma no PC/gateway que já serve os outros componentes.
+    uint8_t versao = (resposta[0] >> 3) & 7;
+    if (lidos == 48 && aguardando && udp.remoteIP() == servidor &&
+        udp.remotePort() == TOWERAI_WOKWI_NTP_PORTA &&
+        (resposta[0] & 7) == 4 && (resposta[0] >> 6) != 3 &&
+        (versao == 3 || versao == 4) && resposta[1] > 0 && resposta[1] < 16 &&
+        memcmp(resposta + 24, desafio, sizeof desafio) == 0) {
+      uint64_t segundos = ((uint32_t) resposta[40] << 24) |
+                          ((uint32_t) resposta[41] << 16) |
+                          ((uint32_t) resposta[42] << 8) | resposta[43];
+      // Desdobrar a era NTP permite atravessar o rollover de 2036.
+      if (segundos < 2208988800ULL) segundos += 4294967296ULL;
+      uint64_t unixS = segundos - 2208988800ULL;
+      if (unixS >= 1735689600ULL && unixS < 4102444800ULL) {
+        timeval horario = {};
+        horario.tv_sec = (time_t) unixS;
+        if (settimeofday(&horario, nullptr) == 0) {
+          udp.stop();
+          Serial.println("NTP local do Wokwi: horario recebido do PC");
+          return true;
+        }
+      }
+    }
+  }
+
+  if (!aguardando || agora - enviadoEm >= 5000) {
+    uint8_t pedido[48] = {};
+    pedido[0] = 0x23; // NTP v4, modo cliente
+    for (size_t i = 0; i < sizeof desafio; i += 4) {
+      uint32_t sorteio = esp_random();
+      memcpy(desafio + i, &sorteio, sizeof sorteio);
+    }
+    memcpy(pedido + 40, desafio, sizeof desafio);
+    if (udp.beginPacket(servidor, TOWERAI_WOKWI_NTP_PORTA)) {
+      udp.write(pedido, sizeof pedido);
+      aguardando = udp.endPacket();
+      enviadoEm = agora;
+    }
+  }
+  return false;
+}
+#endif
+
 void conectar(uint32_t agora) {
   if (!redeLigada || mqtt.connected()) return;
   if (tUltimaConexao != 0 && agora - tUltimaConexao < RECONEXAO_MS) return;
@@ -359,6 +433,9 @@ void conectar(uint32_t agora) {
   // Certificados tem prazo de validade: sem horario confiavel nao iniciamos
   // TLS. O sensoriamento e a fila continuam enquanto o NTP local sincroniza.
   // Nao usar setInsecure(): isso permitiria roubar senha com broker falso.
+#ifdef TOWERAI_WOKWI_NTP_PORTA
+  sincronizarRelogioWokwi(agora);
+#endif
   if (time(nullptr) < 1735689600) { // 2025-01-01 UTC: ainda sem sincronizacao
     Serial.println("TLS: aguardando horario do NTP local; sem fallback inseguro");
     return;
@@ -446,7 +523,9 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_SENHA);
   // NTP do Raspberry Pi/PC da sala, sem depender de pool.ntp.org ou internet.
+#ifndef TOWERAI_WOKWI_NTP_PORTA
   configTime(0, 0, NTP_SERVIDOR);
+#endif
 
   Serial.println();
   Serial.println("=== TowerAI / Marco 3 / produtor mic-esp32-01 ===");

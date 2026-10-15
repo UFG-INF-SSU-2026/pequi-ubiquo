@@ -1,4 +1,8 @@
 [wokwi]
 version = 1
-firmware = "build/sketch.ino.merged.bin"
-elf = "build/sketch.ino.elf"
+# Gere com: python marco-3/ferramentas/compilar_produtor.py --wokwi
+firmware = "build-wokwi/sketch.ino.merged.bin"
+elf = "build-wokwi/sketch.ino.elf"
+# Porta do depurador, caso o VS Code inicie em modo debug.
+# Para acompanhar o circuito normalmente, use Wokwi: Start Simulator.
+gdbServerPort = 3333
