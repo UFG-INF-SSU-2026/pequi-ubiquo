@@ -1,0 +1,5 @@
+broker/local/
+broker/downloads/
+produtor/segredos.h
+produtor/build/
+evidencias/*.log

@@ -1,0 +1,45 @@
+name: 'Marco 3 - consumidor fora do ar e sensor desligado'
+version: 1
+author: 'TowerAI'
+# Rode o simulador SEM o consumidor e suba o consumidor depois de ~1 min.
+# Cobre: retry com espera crescente enquanto nao ha ACK, entrega quando o
+# consumidor volta, e FALHA_SENSOR suspendendo a ata (sem fecha-la).
+steps:
+  - wait-serial: 'PRONTO'
+  - set-control:
+      part-id: pot1
+      control: position
+      value: 0.3333
+  - wait-serial: 'MQTT conectado'
+
+  # 1. consumidor fora do ar: ninguem confirma, o ESP32 reenvia e espera mais
+  - wait-serial: 'RETRY sem ACK em 2000 ms'
+  - wait-serial: 'RETRY sem ACK em 4000 ms'
+  # (o consumidor sobe aqui)
+  - wait-serial: 'ACK <- aplicado'
+  - wait-serial: 'FILA - entregue'
+
+  # 2. fala abre a ata
+  - set-control:
+      part-id: pot1
+      control: position
+      value: 0.7778
+  - wait-serial: 'estado=SILENCIO -> FALANDO'
+  - wait-serial: 'ACK <- aplicado'
+  - delay: 1000ms
+
+  # 3. sensor desligado: FALHA_SENSOR suspende a ata; ao voltar, reabre
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 1
+  - wait-serial: 'estado=FALANDO -> FALHA_SENSOR'
+  - wait-serial: 'ACK <- aplicado'
+  - delay: 1000ms
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 0
+  - wait-serial: 'estado=FALHA_SENSOR -> FALANDO'
+  - wait-serial: 'ACK <- aplicado'
+  - delay: 1500ms

@@ -1,5 +1,7 @@
 # Proposta: segurança do broker e informação derivada pelo consumidor
 
+> **Implementação em 15/10/2026:** esta proposta foi usada como base do marco 3. O código executável está nas pastas desta etapa; [README](README.md), [plano de segurança](plano-seguranca.md) e [guia do broker local](broker/README.md) descrevem a implementação e seu aceite. Os trechos de código abaixo permanecem esboços de concepção; a fonte de verdade da execução são os arquivos `.py`/`.ino`. O painel apresenta a decisão da ata; gravação real no Flask continua evolução.
+
 ## Resumo
 
 | | Proposta | Em uma frase |
@@ -82,65 +84,13 @@ Consequências diretas:
 
 ## 1.5 Como configurar no HiveMQ
 
-### HiveMQ na rede da sala (arquitetura real, sem internet)
+**Decisão confirmada:** o broker é **HiveMQ Community Edition instalado localmente**, com a File RBAC Extension. A combinação fixada para o laboratório é CE **2025.5**, Java 21 e File RBAC **4.6.15**, validada com TLS e autenticação no PC da sala. Não usamos HiveMQ Cloud nem o broker público do marco 2.
 
-Combina com o requisito "sem internet" (Atividade 01) e com o que o `decisoes.md` já previa. O HiveMQ roda no PC host ou no Raspberry Pi (por exemplo em Docker), com a **File RBAC Extension** (licença Apache 2.0), que lê usuários, papéis e permissões de um XML e aceita senha com hash.
+A instalação reproduzível está em [broker/README.md](broker/README.md). `broker/preparar.py` gera CA, certificado, keystore, senhas aleatórias, hashes e ACLs; `broker/compose.yaml` instancia o serviço. A pasta inteira de extensões é substituída, para não herdar o autenticador permissivo da imagem. Há somente listener TLS 8883, publicado em loopback por padrão; o guia explica como liberar a interface LAN.
 
-```xml
-<file-rbac>
-  <users>
-    <user>
-      <name>mic-esp32-01</name>
-      <password>HASH_GERADO_PELA_FERRAMENTA</password>
-      <roles><id>dispositivo</id></roles>
-    </user>
-    <user>
-      <name>consumidor-sala-204</name>
-      <password>HASH_GERADO_PELA_FERRAMENTA</password>
-      <roles><id>consumidor</id></roles>
-    </user>
-    <user>
-      <name>painel-sala-204</name>
-      <password>HASH_GERADO_PELA_FERRAMENTA</password>
-      <roles><id>painel</id></roles>
-    </user>
-  </users>
-  <roles>
-    <role>
-      <id>dispositivo</id>
-      <permissions>
-        <!-- ${{username}}: a extensão troca pelo usuário autenticado -->
-        <permission><topic>ufg-ssu-2026/towerai/sala-204/dev/${{username}}/telemetry</topic><activity>PUBLISH</activity></permission>
-        <permission><topic>ufg-ssu-2026/towerai/sala-204/dev/${{username}}/status</topic><activity>PUBLISH</activity></permission>
-        <permission><topic>ufg-ssu-2026/towerai/sala-204/dev/${{username}}/ack</topic><activity>SUBSCRIBE</activity></permission>
-      </permissions>
-    </role>
-    <role>
-      <id>consumidor</id>
-      <permissions>
-        <permission><topic>ufg-ssu-2026/towerai/sala-204/dev/+/telemetry</topic><activity>SUBSCRIBE</activity></permission>
-        <permission><topic>ufg-ssu-2026/towerai/sala-204/dev/+/status</topic><activity>SUBSCRIBE</activity></permission>
-        <permission><topic>ufg-ssu-2026/towerai/sala-204/dev/+/ack</topic><activity>PUBLISH</activity></permission>
-        <permission><topic>ufg-ssu-2026/towerai/sala-204/insights/reuniao</topic><activity>PUBLISH</activity></permission>
-      </permissions>
-    </role>
-    <role>
-      <id>painel</id>
-      <permissions>
-        <permission><topic>ufg-ssu-2026/towerai/sala-204/insights/reuniao</topic><activity>SUBSCRIBE</activity></permission>
-      </permissions>
-    </role>
-  </roles>
-</file-rbac>
-```
+Na File RBAC 4.6.15, os arquivos ficam em `conf/config.xml` e `conf/credentials.xml` dentro da extensão. `${{username}}` é a sintaxe de substituição de usuário. Foram acrescentados apenas a conta descartável `mic-injetor` para demonstração local e o procedimento de revogação/rotação. Os hashes usam o formato de três campos da versão fixada; exemplos legados não devem ser copiados indiscriminadamente.
 
-> **Confirmar antes de usar.** (1) A sintaxe exata do marcador de usuário (`${{username}}` acima, como aparece na documentação consultada) pode variar conforme a versão da extensão; conferir no README da versão instalada. (2) Não confirmamos na documentação que a File RBAC Extension roda na HiveMQ **Community Edition**; o suporte da HiveMQ a recomenda para esse caso, mas vale validar na primeira subida. Se não rodar, a alternativa é a edição com o Security Extension da HiveMQ, ou escrever um autenticador/autorizador próprio com o Extension SDK.
-
-Passos:
-1. gerar o hash com a ferramenta da extensão: `java -jar hivemq-file-rbac-extension-<versão>.jar -p <senha>`;
-2. criar um **listener TLS** (8883) no HiveMQ com certificado do host (CA própria da sala, instalada nos clientes);
-3. **desabilitar** o listener 1883 (ou deixar só em `localhost`);
-4. confirmar que conexão sem credencial é recusada.
+**Semântica de revogação:** o reload só afeta novas conexões. É preciso desconectar a sessão antiga; no laboratório, reiniciar o broker. A compatibilidade e os caminhos foram conferidos na distribuição oficial e nos testes executados, substituindo as dúvidas presentes na proposta inicial.
 
 ## 1.6 Mudanças no código
 
@@ -156,7 +106,7 @@ PubSubClient mqtt(rede);
 
 // setup(): o TLS valida a data de validade do certificado, entao o relogio
 // precisa estar certo antes de conectar (o projeto ja preve NTP local, Atividade 02)
-configTime(-3 * 3600, 0, "pool.ntp.org");   // na rede da sala: o NTP do Raspberry Pi
+configTime(0, 0, NTP_SERVIDOR);   // Raspberry Pi/PC da sala, configurado em segredos.h
 rede.setCACert(CA_RAIZ);
 
 snprintf(topicoEventos, sizeof topicoEventos, "%s/%s/dev/%s/telemetry", PREFIXO, ENTITY_ID, DEVICE_ID);
@@ -179,7 +129,7 @@ usuario = os.environ["MQTT_USUARIO"]
 senha = os.environ["MQTT_SENHA"]
 
 client.username_pw_set(usuario, senha)
-client.tls_set()                       # CAs do sistema (Caminho A); no Caminho B: ca_certs="ca-sala.pem"
+client.tls_set(ca_certs="ca-sala.pem")  # CA publica provisionada da sala; validar hostname
 
 topico_eventos = f"{base}/dev/+/telemetry"
 topico_status  = f"{base}/dev/+/status"
@@ -221,7 +171,7 @@ Passa a ler `MQTT_USUARIO`/`MQTT_SENHA`, usar TLS e os tópicos novos, com crede
 | **Armazenamento no ESP32** | `segredos.h` (no `.gitignore`), ou NVS. Nunca no `sketch.ino` versionado |
 | **Armazenamento no PC** | variáveis de ambiente / `.env` (já existe `.env.example`; adicionar `MQTT_USUARIO` e `MQTT_SENHA`, sem valor) |
 | **Wokwi** | o projeto é compartilhado por link, então qualquer credencial colocada nele fica visível. Usar uma **credencial descartável só para a demo**, com permissão mínima, e **revogá-la depois** |
-| **Revogação** | apagar o usuário no broker derruba o acesso. Dispositivo perdido ou suspeito: remover só ele, os outros continuam |
+| **Revogação** | apagar o usuário bloqueia novas conexões; encerrar também a sessão antiga (restart no laboratório). Dispositivo perdido ou suspeito: remover só ele, os outros continuam |
 | **Rotação** | trocar a senha a cada semestre ou quando alguém sair do grupo |
 | **Quarentena** | a regra da Atividade 02 (20 inválidos em 60 s ⇒ dispositivo em quarentena) passa a ter efeito real: o consumidor conta rejeições por tópico e o administrador revoga a credencial |
 
@@ -231,11 +181,11 @@ Passa a ler `MQTT_USUARIO`/`MQTT_SENHA`, usar TLS e os tópicos novos, com crede
 |---|---|---|
 | T1 | conectar na porta 8883 **sem** usuário | conexão recusada |
 | T2 | conectar com senha errada | recusada; ESP32 loga `state=4` |
-| T3 | conectar na porta 1883 (sem TLS) | porta fechada (Caminho B) |
+| T3 | conectar na porta 1883 (sem TLS) | porta fechada no broker local |
 | T4 | `mic-esp32-01` publicar em `dev/outro-dispositivo/telemetry` | negado pelo broker; o consumidor não recebe nada |
 | T5 | `mic-esp32-01` assinar `…/#` ou `…/insights/reuniao` | negado |
 | T6 | `painel-sala-204` publicar em qualquer tópico | negado |
-| T7 | cliente autenticado publicar em `dev/mic-esp32-01/ack` (A3) | negado; a fila do ESP32 **não** é esvaziada |
+| T7 | dispositivo ou painel autenticado publicar em `dev/mic-esp32-01/ack` (A3) | negado; a fila do ESP32 **não** é esvaziada |
 | T8 | publicar, no tópico do `mic-esp32-01`, um payload com `deviceId` diferente | `REJEITADO identidade_divergente`, sem ACK |
 | T9 | fluxo normal do Marco 2 (roteiro de 8 passos do README) | idêntico ao de hoje, agora sobre TLS com login |
 | T10 | revogar a credencial do mic com ele conectado | ele não reconecta após a próxima queda |
@@ -246,7 +196,7 @@ Observação: no MQTT 3.1.1 o broker nem sempre devolve um erro para publicaçã
 
 - Um dispositivo **comprometido e autenticado** continua podendo mentir sobre os **próprios** dados (dizer `FALANDO` com a sala vazia). Isso é limite do sensor, e a Atividade 02 já trata parte disso cruzando áudio com presença por câmera.
 - A senha dentro do firmware pode ser extraída com acesso físico à placa. Mitigação: uma senha por dispositivo (o estrago fica limitado a ele) e revogação.
-- O broker é ponto único de confiança. Na demo ele é o HiveMQ Cloud (fora do prédio, contraria o "sem internet"); na arquitetura real é o HiveMQ local.
+- O broker é ponto único de confiança e roda localmente também na demonstração. Ele precisa receber manutenção, backup e controle administrativo.
 - O conteúdo das mensagens passa em claro **dentro** do broker. Aqui só trafega estado e nível de áudio, não a voz.
 
 
@@ -563,7 +513,7 @@ def publicar_resumos(client, agora):
 Na Fase 1 os dois trabalham em paralelo, porque a lógica do Thiago não depende do broker. Na Fase 2 o Thiago só testa de ponta a ponta quando as credenciais do Vinícius estiverem prontas.
 
 
-## Fontes (Utilizadas pelo Claude)
+## Fontes da proposta original
 
 - HiveMQ, [File RBAC Extension](https://www.hivemq.com/extension/file-rbac-extension/) e [repositório no GitHub](https://github.com/hivemq/hivemq-file-rbac-extension): usuários, papéis e permissões por XML, senhas com hash, substituição de usuário e client ID nos tópicos.
 - HiveMQ, [Access Management Options per Cloud Subscription Plan](https://docs.hivemq.com/hivemq-platform/connect/access-management-options-per-cloud-plan.html): o que cada plano do HiveMQ Cloud oferece (no Serverless: usuário e senha, uma permissão por credencial, sem RBAC e sem variáveis de tópico).

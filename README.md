@@ -1,3 +1,5 @@
+> **Para executar o MARCO 3:** abra o Docker Desktop, dê dois cliques em **[INICIAR-MARCO-3.cmd](INICIAR-MARCO-3.cmd)** e escolha **2 — demonstração completa sem ESP32**. O fluxo aparece no terminal. [Passo a passo para começar](marco-3/README.md).
+
 # Atividade em Grupo 01 — Análise inicial de um sistema ubíquo
 
 **Integrantes:** Thiago Nascente, Samuel Machado, Moisés Protázio, Vinícius Benevides
@@ -5,6 +7,8 @@
 **Cenário escolhido:** **TowerAI** — appliance **multimodal** (áudio + visão) de colaboração, ciente de contexto e com **processamento de imagens feito localmente**, para grupos reunidos em ambientes sem conectividade externa.
 
 > **Atividade 02** — processamento e distribuição de responsabilidades: [atividade-02.md](atividade-02.md)
+
+> **Marco 3** — continuação do Marco 2 com **broker HiveMQ instalado localmente**, canal MQTT com TLS, autenticação e resumo da reunião: [guia de execução](marco-3/README.md) e [plano de segurança](marco-3/plano-seguranca.md).
 
 ## Parte 1 — Compreensão do problema
 

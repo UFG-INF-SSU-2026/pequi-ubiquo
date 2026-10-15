@@ -1,0 +1,20 @@
+# Execute preparar.py antes. Apenas o listener TLS existe no config gerado.
+# O bind padrão limita a demo ao próprio PC; para ESP32 físico escolha o IP LAN.
+name: towerai-marco3
+services:
+  broker:
+    image: hivemq/hivemq-ce:2025.5
+    ports:
+      - "${MQTT_BIND_IP:-127.0.0.1}:8883:8883"
+    volumes:
+      - ./local/config.xml:/opt/hivemq/conf/config.xml:ro
+      - ./local/server.p12:/opt/hivemq/conf/server.p12:ro
+      # Substituir a pasta inteira elimina a extensão allow-all da imagem.
+      # A extensão RBAC precisa escrever seu arquivo de histórico ao recarregar.
+      - ./local/extensions:/opt/hivemq/extensions
+      - dados:/opt/hivemq/data
+      - logs:/opt/hivemq/log
+    restart: unless-stopped
+volumes:
+  dados:
+  logs:
