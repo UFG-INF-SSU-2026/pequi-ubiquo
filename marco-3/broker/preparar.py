@@ -200,7 +200,10 @@ def main():
             destino.chmod(0o700)
             for arquivo in destino.iterdir():
                 if arquivo.is_file():
-                    arquivo.chmod(0o600)
+                    # Só os dois arquivos montados no broker precisam ser lidos
+                    # pelo grupo suplementar configurado no Compose.
+                    arquivo.chmod(0o640 if arquivo.name in {"config.xml", "server.p12"}
+                                  else 0o600)
         print("Broker preparado em broker/local/. Nenhuma senha foi escrita no terminal.")
     finally:
         shutil.rmtree(temporario)

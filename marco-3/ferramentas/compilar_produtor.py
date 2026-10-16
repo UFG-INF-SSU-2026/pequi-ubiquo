@@ -5,6 +5,7 @@ resultantes contêm credenciais e ficam em produtor/build/, fora do Git.
 """
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import tempfile
@@ -42,7 +43,8 @@ def main():
         ap.error("copie broker/local/segredos.h para produtor/segredos.h e ajuste a rede")
     if args.wokwi and not (PASTA / "broker/local/mic-esp32-01.env").is_file():
         ap.error("execute primeiro: python marco-3/executar.py preparar")
-    cache = PASTA.parent / ".tmp/arduino-cli/arduino-cli.exe"
+    executavel = "arduino-cli.exe" if os.name == "nt" else "arduino-cli"
+    cache = PASTA.parent / ".tmp/arduino-cli" / executavel
     cli = args.cli or shutil.which("arduino-cli")
     config_cli = args.config_cli
     if not cli and cache.is_file():

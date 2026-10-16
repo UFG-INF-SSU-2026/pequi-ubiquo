@@ -4,6 +4,8 @@
 
 Este guia usa **Wokwi dentro do VS Code**, com os arquivos que já estão neste repositório. Esse caminho permite conectar a placa simulada ao broker instalado neste PC pelo gateway privado incluído na extensão. O circuito e o firmware continuam sendo os do marco 3.
 
+**No Linux desta instalação**, use os [comandos com `sg docker -c` no README](README.md#execução-no-linux--comandos-com-sg). O comando de acompanhamento é `sg docker -c 'python3 marco-3/executar.py esp32 --wokwi'`; a compilação usa `python3 marco-3/ferramentas/compilar_produtor.py --wokwi`.
+
 ## 1. Abrir o projeto e habilitar o Wokwi no VS Code
 
 1. Abra o **Visual Studio Code**.
@@ -28,7 +30,7 @@ python marco-3/executar.py preparar
 python marco-3/ferramentas/compilar_produtor.py --wokwi
 ```
 
-No PC em que este projeto foi preparado, o compilador Arduino está no cache local e é detectado automaticamente. Espere aparecer:
+O script detecta o Arduino CLI no PATH ou no cache local do projeto: `.tmp/arduino-cli/arduino-cli` no Linux/macOS e `.tmp/arduino-cli/arduino-cli.exe` no Windows, usando `.tmp/arduino-cli.yaml` quando recorre ao cache. Os binários do ESP32 não acompanham o Git; precisam ser gerados neste PC. Espere aparecer:
 
 ```text
 Firmware compilado em produtor/build-wokwi/.
@@ -144,7 +146,7 @@ Os tempos de sensoriamento seguem o relógio do simulador; o consumidor conta os
 | `wokwi.toml ... not found` | F1 → `Wokwi: Select Config File` → `marco-3/produtor/wokwi.toml` |
 | `gdbServerPort is not set ... cannot start in debug mode` | salve o TOML atualizado, que inclui `gdbServerPort = 3333`; pare a tentativa de debug e use F1 → `Wokwi: Start Simulator` |
 | A simulação aguarda conexão de um depurador | encerre a tentativa de depuração no VS Code e inicie pela ação `Wokwi: Start Simulator` para executar o roteiro normal |
-| Arquivo `.bin` ou `.elf` não encontrado | execute `python marco-3/ferramentas/compilar_produtor.py --wokwi` e aguarde a compilação terminar |
+| Arquivo `.bin` ou `.elf` não encontrado | execute `python marco-3/ferramentas/compilar_produtor.py --wokwi` e aguarde a compilação terminar; os dois arquivos devem estar em `marco-3/produtor/build-wokwi/`. Os caminhos do TOML são relativos a `marco-3/produtor/wokwi.toml`; selecione esse arquivo na extensão |
 | Simulação do marco 2 ou broker público no serial | selecione a configuração do **marco 3**, compile com `--wokwi` e reinicie a simulação |
 | `WiFi: aguardando conexao...` continuamente | use o build `--wokwi`, que configura `Wokwi-GUEST`; reinicie após compilar |
 | `TLS: aguardando horario do NTP local...` continuamente | confira se `esp32 --wokwi` está aberto e se apareceu `NTP local ativo`; o firmware deve ter sido compilado com `--wokwi` |

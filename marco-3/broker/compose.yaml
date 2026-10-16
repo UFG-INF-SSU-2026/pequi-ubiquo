@@ -4,6 +4,10 @@ name: towerai-marco3
 services:
   broker:
     image: hivemq/hivemq-ce:2025.5
+    # No Linux, o iniciador informa o grupo dos arquivos montados (modo 640).
+    # O usuário da imagem continua sendo usado para dados e logs.
+    group_add:
+      - "${MQTT_ARQUIVOS_GID:-0}"
     ports:
       - "${MQTT_BIND_IP:-127.0.0.1}:8883:8883"
     volumes:

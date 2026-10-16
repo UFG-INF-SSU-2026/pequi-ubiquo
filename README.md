@@ -1,4 +1,6 @@
-> **Para executar o MARCO 3:** abra o Docker Desktop, dê dois cliques em **[INICIAR-MARCO-3.cmd](INICIAR-MARCO-3.cmd)** e escolha **2 — demonstração completa sem ESP32**. O fluxo aparece no terminal. [Passo a passo para começar](marco-3/README.md).
+> **Para executar o MARCO 3 no Windows:** abra o Docker Desktop, dê dois cliques em **[INICIAR-MARCO-3.cmd](INICIAR-MARCO-3.cmd)** e escolha **2 — demonstração completa sem ESP32**. O fluxo aparece no terminal. [Passo a passo para começar](marco-3/README.md).
+
+> **No Linux:** consulte os [comandos do Marco 3 com `sg docker -c`](marco-3/README.md#execução-no-linux--comandos-com-sg), incluindo preparação, demonstração, Wokwi, diagnóstico, logs e parada do broker.
 
 # Atividade em Grupo 01 — Análise inicial de um sistema ubíquo
 

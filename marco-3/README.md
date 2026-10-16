@@ -1,6 +1,6 @@
 # Marco 3 — TowerAI: canal MQTT seguro e resumo da reunião
 
-Este é o ponto de entrada para **rodar o marco 3**. A forma mais simples é abrir **`INICIAR-MARCO-3.cmd`**, na pasta principal do projeto, e escolher **2 — demonstração completa sem ESP32**.
+Este é o ponto de entrada para **rodar o marco 3**. No Windows, abra **`INICIAR-MARCO-3.cmd`**, na pasta principal do projeto, e escolha **2 — demonstração completa sem ESP32**. No Linux, siga a seção [Execução no Linux — comandos com sg](#execução-no-linux--comandos-com-sg).
 
 O marco 3 funciona **no terminal**: um sensor simulado envia mensagens, o consumidor decide o estado da ata e o painel mostra o resultado. Você não precisa abrir uma página no navegador para acompanhar esta etapa. O painel aqui é uma saída de texto identificada como `[PAINEL]`.
 
@@ -68,9 +68,61 @@ python marco-3/executar.py parar
 python marco-3/executar.py logs
 ```
 
-Esses mesmos comandos Python funcionam no Linux/macOS, com `python3` quando esse for o nome instalado. O iniciador localiza o projeto pelo próprio arquivo: se o terminal já estiver dentro de `marco-3`, use **`python executar.py demo`**. Não é necessário trocar a pasta para cada componente.
+Esses mesmos comandos Python funcionam no Linux/macOS, com `python3` quando esse for o nome instalado. Para o acesso ao Docker no Linux desta instalação, use as versões com `sg` da seção abaixo. O iniciador localiza o projeto pelo próprio arquivo: se o terminal já estiver dentro de `marco-3`, use **`python executar.py demo`**. Não é necessário trocar a pasta para cada componente.
 
 Os arquivos `run.ps1`, `run.sh` e `serve.py` da raiz iniciam a aplicação web TowerAI. **O comando desta etapa é `executar.py`, dentro de `marco-3`.**
+
+## Execução no Linux — comandos com sg
+
+Execute os comandos abaixo no terminal, a partir da pasta principal **`pequi-ubiquo`**. Requisitos: **Python 3.11+**, **Docker Engine ativo com Compose** e usuário cadastrado no grupo `docker`.
+
+Os exemplos usam o prefixo **`sg docker -c '...'`**, que executa o comando e seus processos filhos com o grupo `docker`, mantendo o seu usuário. Isso permite acessar o Docker quando o cadastro já inclui esse grupo, mas o terminal/VS Code ainda está com os grupos antigos. Para cadastrar o usuário, consulte [permissão de acesso ao Docker no Linux](broker/README.md#permissão-de-acesso-ao-docker-no-linux).
+
+Escolha o comando da etapa que deseja executar; cada linha pode ser usada separadamente:
+
+```bash
+# Confere o acesso ao Docker usando o grupo cadastrado
+sg docker -c 'docker info'
+
+# Abre o menu com as opções 1 a 5
+sg docker -c 'python3 marco-3/executar.py'
+
+# Prepara o ambiente e inicia o broker com TLS
+sg docker -c 'python3 marco-3/executar.py preparar'
+
+# Executa a demonstração completa sem ESP32
+sg docker -c 'python3 marco-3/executar.py demo'
+
+# Diagnostica dependências, acesso ao Docker, TLS e contas
+sg docker -c 'python3 marco-3/executar.py diagnostico'
+
+# Acompanha um ESP32 físico já configurado para acessar o broker
+sg docker -c 'python3 marco-3/executar.py esp32'
+
+# Acompanha os logs do broker; Ctrl+C interrompe a leitura
+sg docker -c 'python3 marco-3/executar.py logs'
+
+# Para o broker e preserva certificados, contas e dados
+sg docker -c 'python3 marco-3/executar.py parar'
+```
+
+### Wokwi no Linux
+
+Com o ambiente preparado, compile o firmware e inicie o acompanhamento com o relógio local:
+
+```bash
+# Gera os arquivos .bin e .elf; esta etapa não acessa o Docker
+python3 marco-3/ferramentas/compilar_produtor.py --wokwi
+
+# Inicia broker, consumidor, painel e NTP local para a simulação
+sg docker -c 'python3 marco-3/executar.py esp32 --wokwi'
+```
+
+A compilação exige Arduino CLI, core ESP32 3.3.2 e PubSubClient 2.8, conforme o [guia do Wokwi](WOKWI.md). Os arquivos gerados ficam em `marco-3/produtor/build-wokwi/`.
+
+**Deixe o segundo comando em execução.** No VS Code, use **F1 → Wokwi: Select Config File → `marco-3/produtor/wokwi.toml`** e depois **F1 → Wokwi: Start Simulator**. Para esta simulação, use o comando com **`--wokwi`**: ele também inicia o NTP local necessário para o ESP32 validar o certificado TLS. A opção 4 do menu inicia apenas o acompanhamento da placa, sem esse relógio.
+
+**Para encerrar:** pare o simulador e pressione **Ctrl+C** no terminal de acompanhamento. O broker continua ativo; use o comando `parar` acima para desligá-lo.
 
 ## Se algo não funcionar
 
@@ -79,9 +131,12 @@ Os arquivos `run.ps1`, `run.sh` e `serve.py` da raiz iniciam a aplicação web T
 | Python não encontrado | instale Python 3.11+ com a opção de adicioná-lo ao PATH; abra um novo terminal |
 | Docker não encontrado | instale Docker Desktop e abra-o antes de executar o projeto |
 | “Abra o Docker Desktop...” | aguarde o motor iniciar e confira o modo de containers Linux; tente novamente |
+| `permission denied` ao acessar o Docker no Linux | confira `docker info` no mesmo terminal e siga [permissão de acesso ao Docker](broker/README.md#permissão-de-acesso-ao-docker-no-linux) |
+| Motor Docker acessível, mas Compose falhou | confira `docker compose version`; no Linux, instale o plugin Compose |
 | Falha no download durante a primeira execução | verifique a internet e repita a opção 1; certificados existentes são preservados |
 | Conta `mic-injetor` recusada | ela pode ter sido revogada após uma demo; siga o procedimento de reativação/rotação abaixo |
 | Certificado inválido | confira endereço, relógio e CA no [guia do broker](broker/README.md); mantenha a validação TLS |
+| Broker não responde por TLS; log indica `config.xml cannot be read` | execute novamente a opção 1; o iniciador ajusta as [permissões dos arquivos montados no Linux](broker/README.md#permissões-do-volume-no-linux) |
 | Painel aguardando dados no modo ESP32 | confira se a placa/simulação está ligada, com broker local, Wi-Fi, credencial e NTP corretos |
 | Só aparece erro ou a tela para de avançar | execute a opção 3; para detalhes do broker, use `python marco-3/executar.py logs` |
 
@@ -127,6 +182,8 @@ Para aprofundar: [plano de segurança](plano-seguranca.md), [instalação e oper
 ## Preparação manual — para executar cada componente separadamente
 
 Requisitos: Python **3.11+** (3.14 usado na validação), Docker Desktop com motor Linux ativo e Compose v2. Internet é necessária para instalar dependências e baixar a imagem/extensão; a comunicação entre componentes passa a ser inteiramente local. A biblioteca de provisionamento de certificados exige Python 3.11 ou superior.
+
+No Linux, após `preparar.py` e antes de `docker compose ... up`, execute `export MQTT_ARQUIVOS_GID="$(stat -c %g marco-3/broker/local/config.xml)"`. Esse passo é automático ao usar `executar.py preparar`.
 
 ```powershell
 python -m venv .venv
@@ -208,6 +265,7 @@ Sem gateway privado, a demonstração local com o injetor continua disponível. 
 
 ```powershell
 # Regras e segurança da aplicação, sem broker
+python -m unittest discover -s marco-3 -p test_executar.py -v
 python -m unittest discover -s marco-3/consumidor -v
 python -m unittest discover -s marco-3/painel -v
 

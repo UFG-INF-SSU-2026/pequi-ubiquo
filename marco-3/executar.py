@@ -48,6 +48,9 @@ def ambiente():
     # terminal não deve transformar consumidor, painel e sensor na mesma conta.
     for nome in ("MQTT_USUARIO", "MQTT_SENHA", "MQTT_CA", "MQTT_BROKER", "MQTT_PORTA"):
         env.pop(nome, None)
+    if sys.platform == "linux" and (LOCAL / "config.xml").is_file():
+        # Só o grupo dos arquivos montados é adicionado ao usuário do container.
+        env["MQTT_ARQUIVOS_GID"] = str((LOCAL / "config.xml").stat().st_gid)
     return env
 
 
@@ -58,16 +61,42 @@ def rodar(comando, **opcoes):
 
 def verificar_docker():
     if not shutil.which("docker"):
-        raise Orientacao("Docker não encontrado. Instale o Docker Desktop e abra-o antes de continuar.")
+        raise Orientacao("Docker não encontrado. No Windows/macOS, instale e abra o Docker Desktop. "
+                         "No Linux, instale o Docker Engine com o plugin Compose.")
     try:
         info = rodar(["docker", "info", "--format", "{{.OSType}}"],
                      capture_output=True, text=True, timeout=15)
-        rodar(COMPOSE + ["version"], capture_output=True, timeout=10)
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
-        raise Orientacao("Abra o Docker Desktop, aguarde o motor iniciar e tente novamente. "
-                         "Ele precisa estar no modo de containers Linux.") from None
+    except subprocess.TimeoutExpired:
+        raise Orientacao("O Docker não respondeu em 15 s. Confira 'docker info' no mesmo terminal. "
+                         "No Docker Desktop, aguarde o motor terminar de iniciar.") from None
+    except subprocess.CalledProcessError as erro:
+        detalhe = (erro.stderr or erro.stdout or "Sem detalhe retornado pelo Docker.").strip()
+        if "permission denied" in detalhe.lower() or "access is denied" in detalhe.lower():
+            orientacao = ("O usuário desta sessão não tem permissão para acessar o Docker. "
+                          "No Linux com Docker Engine, configure o acesso conforme "
+                          "marco-3/broker/README.md#permissão-de-acesso-ao-docker-no-linux "
+                          "e entre novamente na sessão. Se estiver em ambiente restrito, "
+                          "execute no terminal do próprio PC.")
+        elif os.name == "nt":
+            orientacao = ("Abra o Docker Desktop, aguarde o motor iniciar e confira 'docker info' "
+                          "no mesmo terminal. Ele precisa estar no modo de containers Linux.")
+        else:
+            orientacao = ("Não foi possível acessar o motor Docker. Confira 'docker info' e 'docker context ls'. "
+                          "No Linux com Docker Engine e systemd, confira 'systemctl status docker'; "
+                          "se estiver parado, inicie com 'sudo systemctl start docker'. "
+                          "Se usa Docker Desktop, abra-o e aguarde o motor iniciar.")
+        raise Orientacao(f"{orientacao}\nDetalhe do Docker: {detalhe}") from None
     if info.stdout.strip() != "linux":
         raise Orientacao("No Docker Desktop, mude para containers Linux e tente novamente.")
+    try:
+        rodar(COMPOSE + ["version"], capture_output=True, text=True, timeout=10)
+    except subprocess.TimeoutExpired:
+        raise Orientacao("O Docker Compose não respondeu em 10 s. Confira 'docker compose version'.") from None
+    except subprocess.CalledProcessError as erro:
+        detalhe = (erro.stderr or erro.stdout or "Sem detalhe retornado pelo Compose.").strip()
+        raise Orientacao("O motor Docker está acessível, mas o Compose falhou. "
+                         "Confira 'docker compose version'; no Linux, instale o plugin Compose. "
+                         f"\nDetalhe do Compose: {detalhe}") from None
 
 
 def preparar_python():
@@ -112,6 +141,19 @@ def verificar_tls(host):
             return tls.version()
 
 
+def ajustar_permissoes_broker():
+    """Permite leitura pelo grupo suplementar do container, sem expor a CA."""
+    if sys.platform != "linux":
+        return
+    config = LOCAL / "config.xml"
+    keystore = LOCAL / "server.p12"
+    if config.stat().st_gid != keystore.stat().st_gid:
+        raise Orientacao("config.xml e server.p12 precisam pertencer ao mesmo grupo. "
+                         "Confira marco-3/broker/README.md#permissões-do-volume-no-linux.")
+    for arquivo in (config, keystore):
+        arquivo.chmod(0o640)
+
+
 def iniciar_broker(host, ips=()):
     if not LOCAL.exists():
         mostrar("[PREPARAR] Gerando certificados e contas locais pela primeira vez...")
@@ -125,6 +167,7 @@ def iniciar_broker(host, ips=()):
             mostrar("[PREPARAR] --ip só vale no primeiro provisionamento; os SANs atuais foram preservados. "
                     "Para alterar o certificado, consulte marco-3/broker/README.md.")
     verificar_arquivos()
+    ajustar_permissoes_broker()
     rodar(COMPOSE + ["up", "-d"])
     mostrar("[PREPARAR] Aguardando o broker local responder por TLS...")
     limite = time.monotonic() + 40
@@ -190,7 +233,7 @@ def diagnostico(host):
         for conta in ("consumidor-sala-204", "painel-sala-204", "mic-injetor"):
             checar(f"Login de {conta}", lambda c=conta: verificar_conta(c, host))
     if problemas:
-        mostrar("\nPróximo passo: abra o Docker Desktop e execute 'python marco-3/executar.py preparar'.")
+        mostrar("\nResolva os itens [PENDENTE] acima. Depois execute 'python marco-3/executar.py preparar'.")
         return 1
     mostrar("\nAmbiente pronto. Execute 'python marco-3/executar.py demo' para ver o fluxo.")
     return 0

@@ -10,6 +10,8 @@ Para a execução guiada do marco 3, o comando `python marco-3/executar.py prepa
 
 Execute da raiz, com Python/venv e Docker ativos:
 
+**No Linux**, entre os comandos `preparar.py` e `docker compose ... up`, defina `export MQTT_ARQUIVOS_GID="$(stat -c %g marco-3/broker/local/config.xml)"` para conceder ao container o grupo de leitura dos arquivos. O iniciador `executar.py preparar` configura isso automaticamente.
+
 ```powershell
 python -m pip install -r marco-3/requirements.txt
 python marco-3/broker/preparar.py
@@ -62,7 +64,7 @@ $env:MQTT_BIND_IP = "192.168.50.2"
 docker compose -f marco-3/broker/compose.yaml up -d --force-recreate
 ```
 
-No Bash: `MQTT_BIND_IP=192.168.50.2 docker compose -f marco-3/broker/compose.yaml up -d --force-recreate`. Se o bind for no IP LAN, os clientes no próprio PC também usam esse IP ou DNS com `--broker 192.168.50.2`. Os testes automáticos usam o bind padrão em loopback.
+No Bash, com `MQTT_ARQUIVOS_GID` exportado conforme a instalação acima: `MQTT_BIND_IP=192.168.50.2 docker compose -f marco-3/broker/compose.yaml up -d --force-recreate`. Se o bind for no IP LAN, os clientes no próprio PC também usam esse IP ou DNS com `--broker 192.168.50.2`. Os testes automáticos usam o bind padrão em loopback.
 
 Libere TCP 8883 **somente na rede privada da sala** no firewall local, se necessário; não configure redirecionamento no roteador para a internet. O Compose não muda regras do firewall. Não habilite 1883 como solução para problemas de certificado. Se já provisionou apenas para localhost, emitir um novo certificado com o SAN LAN é uma operação administrativa: preservar a CA evita reinstalar confiança; recriar toda a CA exige reprovisionar todos os clientes.
 
@@ -92,9 +94,38 @@ Após rotação, redistribua só o perfil da conta afetada. No ESP32, copie nova
 
 O certificado do broker vence em 365 dias; a CA em 10 anos. Planeje renovação antes do vencimento, com CA preservada e novo certificado com os mesmos SANs. A renovação de certificado não foi automatizada nesta etapa. A senha da CA está inicialmente ao lado da chave para facilitar o provisionamento: mova ambas para guarda administrativa protegida e separada do PC operacional antes de uso permanente.
 
+## Permissão de acesso ao Docker no Linux
+
+Se a opção 4 falhar com `permission denied` ao acessar `/var/run/docker.sock`, o iniciador ainda não conseguiu falar com o Docker; o broker não chegou a ser iniciado. Confira `docker info` no **mesmo terminal** em que executa o projeto.
+
+Para Docker Engine instalado no próprio Linux, o administrador pode conceder acesso ao seu usuário conforme a [documentação oficial](https://docs.docker.com/engine/install/linux-postinstall/):
+
+```bash
+sudo groupadd --force docker
+sudo usermod -aG docker "$USER"
+```
+
+O grupo `docker` concede privilégios equivalentes aos de administrador. Depois da alteração, **saia da sessão do sistema e entre novamente**, reabra o VS Code e confira `docker info`. Abrir somente outra aba de terminal não atualiza os grupos dos processos já abertos. Para testar imediatamente em um terminal, `newgrp docker` abre um novo shell; execute o projeto dentro dele.
+
+Se a mensagem indicar que o motor não está disponível, confira `systemctl status docker` e, caso esteja parado, use `sudo systemctl start docker` (instalações com systemd). No Docker Desktop, abra o aplicativo e aguarde o motor iniciar. `docker context ls` ajuda a conferir se o terminal aponta para a instalação desejada.
+
+Quando `docker info` funcionar sem erro, execute novamente `python3 marco-3/executar.py esp32` ou escolha a opção 4. Em terminais isolados, containers ou ambientes restritos, o acesso também depende das permissões concedidas ao ambiente; faça a verificação no terminal do próprio PC. O iniciador não altera grupos nem permissões do sistema.
+
 ## Permissões do volume no Linux
 
-`preparar.py` restringe os arquivos administrativos ao usuário que o executa. O container precisa ler `config.xml` e `server.p12` e ler/escrever a pasta da extensão. Consulte `docker run --rm --entrypoint id hivemq/hivemq-ce:2025.5` para conhecer o usuário da imagem. Conceda acesso somente a esse usuário/grupo/ACL do host nos caminhos montados, ou execute o serviço com `user: "UID:GID"` correspondente ao usuário que provisionou e garanta escrita nos volumes `dados`/`logs`. Não use `chmod -R 777`. A instalação nativa pode usar os mesmos arquivos com caminhos ajustados no `config.xml`, a extensão em `extensions/` e sem `allow-all`.
+No Linux, `preparar.py` deixa `local/` com modo `700`; CA privada, senhas e perfis ficam com `600`. Somente `config.xml` e `server.p12`, montados individualmente no container, recebem `640`. O Compose adiciona o grupo desses arquivos como grupo suplementar do usuário da imagem, sem trocar o usuário que já tem acesso aos volumes `dados`/`logs`. A extensão também precisa ler/escrever sua pasta montada, que deve pertencer ao mesmo grupo.
+
+O iniciador ajusta as permissões dos dois arquivos e informa `MQTT_ARQUIVOS_GID` automaticamente, inclusive em instalações existentes. Se o log mostrar `config.xml cannot be read` seguido de listener na porta `1883`, execute novamente `python3 marco-3/executar.py preparar`: o `compose up` recria o container quando o grupo suplementar muda, e a conexão TLS é verificada antes de indicar sucesso.
+
+Para executar o Compose manualmente no Linux, configure o grupo no mesmo terminal:
+
+```bash
+export MQTT_ARQUIVOS_GID="$(stat -c %g marco-3/broker/local/config.xml)"
+chmod 640 marco-3/broker/local/config.xml marco-3/broker/local/server.p12
+docker compose -f marco-3/broker/compose.yaml up -d
+```
+
+A instalação nativa pode usar os mesmos arquivos com caminhos ajustados no `config.xml`, a extensão em `extensions/` e sem `allow-all`.
 
 ## Diagnóstico e parada
 
