@@ -7,7 +7,7 @@ login. Two ingestion modes:
   - Batch:    POST /api/stt/transcribe   (raw PCM16 mono, or a WAV)  -> {text}
   - Streaming: WS  /api/stt/stream        (PCM16 mono frames)         -> caption events
 
-Both reuse the shared Vosk engine (stt.py). If a `room` is given (query param, or
+Both reuse the shared Whisper engine (stt.py). If a `room` is given (query param, or
 the device's default room), transcripts are ALSO published to that room's Live
 Captions page (captions.py) — so an IoT mic shows up live for human viewers.
 

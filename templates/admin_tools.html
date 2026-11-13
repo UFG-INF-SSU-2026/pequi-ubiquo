@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Assistant permissions · TowerAI{% endblock %}
+{% block content %}
+<div class="iot-page">
+  <header class="iot-head"><a class="btn" href="{{ url_for('chat.index') }}">← Chat</a><h1>Assistant permissions</h1></header>
+  <form method="post">
+    <p class="muted">Which tools the assistant may use for each kind of person. Tools marked ✋ wait for the requester's approval in chat before they run.</p>
+    <table class="iot-table">
+      <thead><tr><th>Tool</th><th>What it does</th><th>Who may use it</th></tr></thead>
+      {% for name, t in tools.items() %}
+      <tr><td><code>{{ name }}</code>{% if t.confirm %} ✋{% endif %}{% if t.writes %} <span class="pill">acts</span>{% endif %}</td>
+        <td class="muted">{{ t.description }}</td>
+        <td><select name="perm_{{ name }}">{% for c in choices %}<option value="{{ c }}" {{ 'selected' if perms[name] == c }}>{{ c }}</option>{% endfor %}</select></td></tr>
+      {% endfor %}
+    </table>
+    <h2>Admins</h2>
+    <p class="muted">Admins can change these settings, use "admins" tools, and decide on anyone's pending actions.</p>
+    <p>{% for u in users %}<label class="opt-inline"><input type="checkbox" name="admin" value="{{ u.id }}" {{ 'checked' if u.is_admin }}> {{ u.username }}</label> {% endfor %}</p>
+    <button class="btn primary" type="submit">Save</button>
+  </form>
+</div>
+{% endblock %}

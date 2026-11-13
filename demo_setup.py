@@ -5,7 +5,8 @@ exemplo (mostra a chave de API), grava uma reunião de exemplo e roda um scan de
 rede inicial — assim todas as funcionalidades já têm conteúdo ao abrir.
 
     python demo_setup.py                  # semeia tudo
-    python demo_setup.py --download-model # também baixa o modelo pt-BR do Vosk (~32MB)
+    python demo_setup.py --download-model # também baixa o modelo Whisper (WHISPER_MODEL, padrão "small" ~480MB)
+                                          # e os modelos de identificação de falantes (~33MB)
 """
 import argparse
 
@@ -64,29 +65,51 @@ def initial_scan():
 
 
 def download_model():
-    import io
-    import urllib.request
-    import zipfile
-    from pathlib import Path
-    dest = Path(config.BASE_DIR) / "models" / "vosk-model-small-pt-0.3"
+    import stt
+    dest = stt.local_model_dir()
     if dest.is_dir():
-        print("• modelo pt-BR já presente")
+        print(f"• modelo Whisper já presente: {dest}")
         return
-    url = "https://alphacephei.com/vosk/models/vosk-model-small-pt-0.3.zip"
-    print("• baixando modelo pt-BR (~32MB)...")
-    data = urllib.request.urlopen(url, timeout=180).read()
-    zipfile.ZipFile(io.BytesIO(data)).extractall(str(Path(config.BASE_DIR) / "models"))
+    try:
+        from faster_whisper import download_model as fw_download
+    except ImportError:
+        print("• faster-whisper não instalado — rode `pip install faster-whisper`")
+        return
+    print(f"• baixando modelo Whisper '{config.WHISPER_MODEL}'...")
+    try:
+        fw_download(config.WHISPER_MODEL, output_dir=str(dest))
+    except Exception as e:
+        print(f"• falha ao baixar o modelo (sem acesso ao huggingface.co?): {e}")
+        return
     print(f"• modelo pronto: {dest}")
+
+
+def download_tts_voice():
+    import tts
+    try:
+        print(f"• voz de síntese (Piper) pronta: {tts.download_voice()}")
+    except Exception as e:
+        print(f"• falha ao baixar a voz Piper (sem acesso ao huggingface.co?): {e}")
+
+
+def download_diarization_models():
+    import diarize
+    try:
+        print(f"• modelos de identificação de falantes prontos: {diarize.download_models()}")
+    except Exception as e:
+        print(f"• falha ao baixar os modelos de falantes (sem acesso ao github.com?): {e}")
 
 
 def main():
     ap = argparse.ArgumentParser(description="Semeia dados de demonstração do TowerAI")
-    ap.add_argument("--download-model", action="store_true", help="baixa o modelo pt-BR do Vosk")
+    ap.add_argument("--download-model", action="store_true", help="baixa os modelos Whisper e de falantes para uso offline")
     args = ap.parse_args()
 
     db.init_db()
     if args.download_model:
         download_model()
+        download_diarization_models()
+        download_tts_voice()
     ensure_user()
     ensure_device()
     sample_meeting()
@@ -94,7 +117,7 @@ def main():
 
     print("\n=== Demo pronto ===")
     print(f"Login: {DEMO_USER} / {DEMO_PASS}")
-    print(f"Inicie o servidor:  python serve.py")
+    print("Inicie o servidor:  python serve.py")
     print(f"Acesse:             http://localhost:{config.PORT}")
 
 

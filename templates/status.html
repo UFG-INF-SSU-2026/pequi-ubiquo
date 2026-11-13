@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Status · TowerAI{% endblock %}
+{% block head %}{% if s.model_check.running %}<meta http-equiv="refresh" content="3">{% endif %}{% endblock %}
+{% block content %}
+{% macro ok(v) %}<span class="st {{ 'ok' if v else 'bad' }}">{{ '✓' if v else '✗' }}</span>{% endmacro %}
+<div class="iot-page">
+  <header class="iot-head">
+    <a class="btn" href="{{ url_for('chat.index') }}">← Chat</a>
+    <h1>System status</h1>
+    <a class="btn" href="{{ url_for('status.api') }}">JSON</a>
+  </header>
+
+  {% for level, text in tips %}<div class="tip {{ level }}">{{ text }}</div>{% endfor %}
+
+  {% set mc = s.model_check.result %}
+  <section class="notes-card">
+    <div class="notes-head">
+      <h2>🧠 AI model</h2>
+      {% if s.model_check.running %}<span class="muted">⏳ Checking… (page refreshes)</span>
+      {% else %}<form method="post" action="{{ url_for('status.model_check') }}">
+        <button class="btn primary" type="submit">{{ 'Re-run' if mc else 'Run' }} model check</button></form>{% endif %}
+    </div>
+    <table class="iot-table st-table">
+      <tr><td>Server</td><td>{{ s.llm.base_url }}{% if mc and mc.server %} {{ ok(mc.server.ok) }}{% if mc.server.base and mc.server.base != s.llm.base_url %} <span class="muted">(answered at {{ mc.server.base }})</span>{% endif %}{% endif %}</td></tr>
+      <tr><td>Configured model</td><td>{{ s.llm.model }}{% if s.llm.vision_model %} · vision: {{ s.llm.vision_model }}{% endif %}</td></tr>
+      {% if mc and mc.server and mc.server.models %}<tr><td>Models on server</td><td>{{ mc.server.models|join(', ') }}</td></tr>{% endif %}
+      {% if mc %}
+        {% if mc.error %}<tr><td>Check</td><td class="err">{{ mc.error }}</td></tr>{% endif %}
+        {% if mc.chat %}<tr><td>Answers</td><td>{{ ok(mc.chat.ok) }} {{ mc.chat.secs }} s{% if mc.chat.model %} · {{ mc.chat.model }}{% endif %}{% if mc.chat.error %} · <span class="err">{{ mc.chat.error }}</span>{% endif %}</td></tr>{% endif %}
+        {% if mc.tools %}<tr><td>Tool calling (agent)</td><td>{{ ok(mc.tools.ok) }}
+          {% if mc.tools.mode == 'native' %}native{% elif mc.tools.mode == 'rejected' %}rejected by the server — text fallback{% elif mc.tools.mode == 'text' %}ignored the tool — text fallback{% endif %}
+          · {{ mc.tools.secs }} s{% if mc.tools.error %} · <span class="err">{{ mc.tools.error }}</span>{% endif %}</td></tr>{% endif %}
+        {% if mc.vision %}<tr><td>Reads images (📷)</td><td>{{ ok(mc.vision.ok) }}{% if mc.vision.reply %} said “{{ mc.vision.reply }}” for a red image{% endif %}
+          · {{ mc.vision.secs }} s{% if mc.vision.error %} · <span class="err">{{ mc.vision.error }}</span>{% endif %}</td></tr>{% endif %}
+        <tr><td>Checked</td><td class="muted">{{ mc.at|datetime }}</td></tr>
+      {% endif %}
+      <tr><td>Agent</td><td>{{ 'on' if s.agent.enabled else 'off' }} · {{ s.agent.protocol }} protocol · {{ 'can act' if s.agent.writes else 'read-only' }} · ≤ {{ s.agent.max_steps }} steps</td></tr>
+    </table>
+  </section>
+
+  <section class="notes-card">
+    <h2>🤖 Assistant activity <span class="muted">(audit log, newest first)</span></h2>
+    {% if s.agent_runs %}
+    <table class="iot-table st-table runs">
+      <thead><tr><th>When</th><th>Who / room</th><th>Request</th><th>Tools used</th><th>Time</th></tr></thead>
+      {% for r in s.agent_runs %}
+      <tr><td>{{ r.at|datetime }}</td><td>{{ r.user or '—' }} · #{{ r.room or '—' }}</td>
+        <td>{{ r.prompt|truncate(90) }}{% if r.error %}<br><span class="err">✗ {{ r.error }}</span>{% endif %}</td>
+        <td>{{ r.tools|join(', ') or '—' }}</td><td>{{ r.secs }} s</td></tr>
+      {% endfor %}
+    </table>
+    {% else %}<p class="muted">No assistant requests yet.</p>{% endif %}
+  </section>
+
+  <div class="st-grid">
+    <section class="notes-card">
+      <h2>🎤 Speech</h2>
+      <table class="iot-table st-table">
+        <tr><td>faster-whisper</td><td>{{ ok(s.speech.installed) }}</td></tr>
+        <tr><td>Whisper model</td><td>{{ s.speech.model }} {{ ok(s.speech.local_copy or s.speech.loaded) }} {{ 'local copy' if s.speech.local_copy else ('loaded' if s.speech.loaded else 'not downloaded') }}</td></tr>
+        <tr><td>Engine</td><td>{{ s.speech.engine or 'not loaded' }}</td></tr>
+        <tr><td>Speaker labels</td><td>{{ ok(s.speech.diarization) }}</td></tr>
+      </table>
+    </section>
+    <section class="notes-card">
+      <h2>🧩 Features</h2>
+      <p>{% for f in s.features.loaded %}<span class="pill">✓ {{ f }}</span> {% endfor %}</p>
+      {% for f, err in s.features.failed.items() %}<p class="err">✗ {{ f }}: {{ err }}</p>{% endfor %}
+    </section>
+    <section class="notes-card">
+      <h2>💾 Storage</h2>
+      <table class="iot-table st-table">
+        <tr><td>Disk free</td><td>{{ human(s.storage.free) }} of {{ human(s.storage.total) }}</td></tr>
+        {% for k, v in s.storage.sizes.items() %}<tr><td>{{ k|capitalize }}</td><td>{{ human(v) }}</td></tr>{% endfor %}
+      </table>
+    </section>
+    <section class="notes-card">
+      <h2>🌐 Network</h2>
+      <table class="iot-table st-table">
+        {% for u in s.network.urls %}<tr><td>{{ 'Address' if loop.first else '' }}</td><td>{{ u }}</td></tr>{% endfor %}
+        <tr><td>HTTPS</td><td>{{ ok(s.network.tls) }}</td></tr>
+        <tr><td>Redis</td><td>{{ s.network.redis }}</td></tr>
+      </table>
+    </section>
+    <section class="notes-card">
+      <h2>📊 Data & jobs</h2>
+      <table class="iot-table st-table">
+        {% for k, v in s.counts.items() %}<tr><td>{{ k|capitalize }}</td><td>{{ v }}</td></tr>{% endfor %}
+        {% for k, v in s.jobs.counts.items() %}<tr><td>Jobs: {{ k }}</td><td>{{ v }}</td></tr>{% endfor %}
+      </table>
+      {% for j in s.jobs.errors %}<p class="err">#{{ j.id }} {{ j.title }}: {{ j.status_detail }}</p>{% endfor %}
+    </section>
+    <section class="notes-card">
+      <h2>🖥 System</h2>
+      <table class="iot-table st-table">
+        <tr><td>Host</td><td>{{ s.network.hostname }}</td></tr>
+        <tr><td>Platform</td><td>{{ s.system.platform }} · {{ s.system.cpus }} CPUs</td></tr>
+        <tr><td>Python</td><td>{{ s.system.python }}</td></tr>
+        <tr><td>Uptime</td><td>{{ (s.system.uptime_s // 3600) }} h {{ (s.system.uptime_s % 3600 // 60) }} min</td></tr>
+      </table>
+    </section>
+  </div>
+</div>
+{% endblock %}

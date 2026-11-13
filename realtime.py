@@ -20,9 +20,8 @@ from flask_sock import Sock
 
 import config
 import db
-import llm
 import pubsub
-from chat import _mentions_assistant, _build_context
+from chat import _mentions_assistant, assistant_reply
 
 sock = Sock()
 
@@ -82,14 +81,14 @@ def _persist_and_broadcast(room_name, room_id, user_id, role, username, content)
         "id": mid, "role": role, "username": username,
         "content": content, "created_at": time.time(),
     })
+    if role == "user":
+        import notifications
+        notifications.on_message(room_name, username, content)
 
 
-def _handle_ai(room_name, room_id):
-    """Runs in a worker thread: call the LLM, then broadcast its reply."""
-    try:
-        reply = llm.chat_completion(_build_context(room_id))
-    except Exception as e:
-        reply = f"[{config.ASSISTANT_NAME} is unavailable: {e}]"
+def _handle_ai(room_name, room_id, user=None):
+    """Runs in a worker thread: ask the assistant (agent), then broadcast its reply."""
+    reply = assistant_reply(db.get_room(room_name), user)
     _persist_and_broadcast(
         room_name, room_id, None, "assistant", config.ASSISTANT_NAME, reply
     )
@@ -129,7 +128,7 @@ def ws_room(ws, name):
 
             if data.get("ask_ai") or _mentions_assistant(content):
                 threading.Thread(
-                    target=_handle_ai, args=(name, room["id"]), daemon=True
+                    target=_handle_ai, args=(name, room["id"], user), daemon=True
                 ).start()
     finally:
         _leave(name, conn)

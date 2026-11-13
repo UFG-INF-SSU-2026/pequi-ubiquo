@@ -6,6 +6,7 @@
     <a class="btn" href="{{ url_for('chat.room', name=room['name']) }}">← #{{ room['name'] }}</a>
     <h1>Live Captions</h1>
     <button id="micBtn" class="btn primary">🎤 Start captioning</button>
+    <label class="opt-inline" title="One microphone for several people: label each speaker by voice (remembered voices get their name)"><input type="checkbox" id="sharedMic"> Shared mic — label speakers</label>
     {% if 'meetings' in loaded_features %}
     <button id="recBtn" class="btn" data-room="{{ room['name'] }}">● Record</button>
     {% endif %}

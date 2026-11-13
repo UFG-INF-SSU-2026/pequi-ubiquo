@@ -5,14 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}TowerAI{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <script>
+    // CSRF (security.py): add the token to every POST form and same-origin fetch.
+    (function () {
+      const tok = document.querySelector('meta[name="csrf-token"]').content;
+      document.addEventListener("submit", (e) => {
+        const f = e.target;
+        if (f.method.toLowerCase() === "post" && !f.querySelector('input[name="csrf_token"]')) {
+          const i = document.createElement("input");
+          i.type = "hidden"; i.name = "csrf_token"; i.value = tok;
+          f.appendChild(i);
+        }
+      }, true);
+      const orig = window.fetch;
+      window.fetch = function (url, opts) {
+        opts = opts || {};
+        const m = (opts.method || "GET").toUpperCase();
+        const u = new URL(url, location.href);
+        if (m !== "GET" && m !== "HEAD" && u.origin === location.origin) {
+          opts.headers = new Headers(opts.headers || {});
+          opts.headers.set("X-CSRF-Token", tok);
+        }
+        return orig.call(this, url, opts);
+      };
+    })();
+  </script>
+  {% block head %}{% endblock %}
 </head>
 <body>
   <header class="topbar">
     <span class="brand">🗼 TowerAI</span>
     {% if current_user %}
       <span class="spacer"></span>
-      <span class="who">{{ current_user['username'] }}</span>
-      <a class="btn" href="{{ url_for('auth.logout') }}">Logout</a>
+      <a class="btn bell" href="{{ url_for('chat.notifications_page') }}" title="Notifications">🔔<span id="bell-count" class="badge" hidden></span></a>
+      <span class="who">{{ current_user['username'] }}{% if current_user['is_admin'] %} · admin{% endif %}</span>
+      <form method="post" action="{{ url_for('auth.logout') }}" class="inline-form"><button class="btn" type="submit">Logout</button></form>
     {% endif %}
   </header>
 
@@ -25,5 +53,6 @@
   {% endwith %}
 
   <main>{% block content %}{% endblock %}</main>
+  {% if current_user %}<script src="{{ url_for('static', filename='notify.js') }}"></script>{% endif %}
 </body>
 </html>

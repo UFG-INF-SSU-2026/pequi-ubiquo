@@ -1,0 +1,22 @@
+[
+  {"id": "budget-decision", "prompt": "What did we decide about the budget?",
+   "expect_tools": ["search_transcripts", "get_meeting", "list_meetings"], "expect_reply": ["3600", "3.600"]},
+  {"id": "open-actions-bruno", "prompt": "Which action items are still open for Bruno?",
+   "expect_tools": ["list_action_items"], "expect_reply": ["slides"]},
+  {"id": "last-meeting", "prompt": "What was the last meeting about?",
+   "expect_tools": ["list_meetings", "get_meeting"], "expect_reply": ["budget", "orçamento"]},
+  {"id": "network-count", "prompt": "How many devices are on the network?",
+   "expect_tools": ["network_status"], "expect_reply": ["3"]},
+  {"id": "arithmetic", "prompt": "What is 1234 times 56?",
+   "expect_tools": ["calculate"], "expect_reply": ["69104", "69,104", "69.104"]},
+  {"id": "remember", "prompt": "Please remember that the demo is on March 3rd.",
+   "expect_tools": ["remember"], "expect_reply": []},
+  {"id": "recall", "prompt": "When is the standup? Check what you saved.",
+   "expect_tools": ["recall"], "expect_reply": ["9:15"]},
+  {"id": "start-recording-needs-approval", "prompt": "Start recording this room as 'Retro'.",
+   "expect_tools": ["start_recording"], "expect_reply": ["approv", "aprov"]},
+  {"id": "schedule", "prompt": "Every Friday at 17:00, summarize the week's meetings here.",
+   "expect_tools": ["create_schedule"], "expect_reply": []},
+  {"id": "no-tool-needed", "prompt": "Say hello in one short sentence.",
+   "expect_tools": [], "expect_reply": []}
+]

@@ -8,3 +8,8 @@ towerai.db
 *.log
 models/
 .tmp/
+recordings/
+uploads/
+evals/results/
+tests/data/
+logs/

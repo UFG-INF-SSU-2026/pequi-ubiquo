@@ -69,6 +69,45 @@ Barra lateral → **Meetings**. Há uma "Reunião de demonstração" de exemplo 
 pesquise por palavras. Na página de legendas, o botão **● Record** grava tudo que
 for transcrito na sala; depois **exporte em .txt**.
 
+- **Enviar gravação:** em **Meetings**, escolha um arquivo de áudio ou vídeo (mp3,
+  m4a, wav, ogg, webm, mp4…) e clique **⬆ Upload recording**. Ele é transcrito em
+  segundo plano nesta máquina; a página se atualiza sozinha até terminar.
+- **Quem falou o quê:** com a opção *Label who said what* a transcrição sai
+  separada por falante (*Speaker 1*, *Speaker 2*…). Informar o número de falantes
+  melhora bastante a separação. Renomeie os falantes na página da reunião
+  (ex.: *Speaker 2 → Bruno*). Requer `python demo_setup.py --download-model`.
+- **Resumo e tarefas:** **🤖 Summarize** pede ao modelo local um resumo, as
+  decisões e uma lista de tarefas (responsável e prazo) — marque-as como feitas
+  ali mesmo. Tudo entra no **.txt** exportado.
+
+### 🩺 Status do sistema
+Barra lateral → **Status**: mostra se o modelo de IA, o Whisper e os demais
+recursos estão prontos e o que corrigir. **Run model check** testa o modelo
+carregado (responde? usa ferramentas? lê imagens?). Pelo terminal:
+`python status.py`.
+
+### 🤖 Assistente com ferramentas (agente)
+Pergunte com `@tower`: ele consulta as atas, resumos e tarefas das reuniões, lê
+salas, inicia/para gravações, lista dispositivos e o último scan de rede. As
+ferramentas usadas aparecem ao fim da resposta (🔧). Também pelo terminal:
+`python agent.py "o que decidimos sobre o orçamento?"`.
+
+### ✨ Novidades
+- **🎧 Mãos livres:** diga "Torre, …" e o Tower responde em voz (Piper, offline).
+  "Torre, parar" encerra; "Torre, repetir" repete.
+- **✋ Aprovação:** ações (gravar, postar, marcar tarefa) pedem **Approve** no chat.
+- **⏰ Tarefas agendadas**, **📎 Arquivos** por sala, **🔔 Notificações** (@menções).
+- **👍/👎** nas respostas ensinam o assistente; **🧠 Training data** exporta o
+  conjunto para ajuste fino (veja `training/README.md`).
+- **🎙 Vozes e vocabulário:** renomeie "Speaker 2" → nome real para o Tower
+  reconhecer a voz depois; corrija linhas (✎) para ensinar palavras ao Whisper.
+
+### 📷 Imagens e 🎤 voz no chat
+- **📷** na caixa de mensagem: envie uma imagem; o texto digitado vira a pergunta e
+  o Tower responde na sala (requer um modelo com visão no LM Studio/Ollama).
+- **🎤** segure para falar: a fala é transcrita (Whisper), vira sua mensagem e a
+  resposta do Tower é lida em voz alta pelo navegador.
+
 ### 🌐 Mapa de rede (Fase 3)
 Barra lateral → **Network Map** → **Scan now**. Ele descobre os dispositivos da sua
 rede (IP, fabricante pelo MAC, latência, portas, nomes mDNS) e desenha o mapa.
@@ -86,8 +125,9 @@ modelo local (apenas sugestões, nunca executa nada).
 
 Copie `.env.example` para `.env`. Destaques:
 - `LLM_BASE_URL` — endpoint do modelo local (padrão `http://127.0.0.1:1234`).
-- `STT_ENGINE` — `vosk` (padrão, CPU, streaming) ou `whisper` (GPU, mais preciso).
-- `VOSK_MODEL_PATH` — ou apenas coloque uma pasta `vosk-model-*` em `models/`.
+- `WHISPER_MODEL` — modelo Whisper (`tiny`…`large-v3`, padrão `small`) ou caminho local;
+  `python demo_setup.py --download-model` deixa uma cópia em `models/` para uso offline.
+- `WHISPER_DEVICE` — `auto` (GPU CUDA se houver, senão CPU), `cuda` ou `cpu`.
 - `USE_TLS=1` — HTTPS (necessário para microfone de dispositivos remotos).
 - `REDIS_URL` — para escalar entre múltiplos processos (gunicorn) no Linux.
 

@@ -6,12 +6,13 @@ behind it. Passwords are hashed with werkzeug (ships with Flask).
 from functools import wraps
 
 from flask import (
-    Blueprint, render_template, request, redirect, url_for, session, flash, g
+    Blueprint, render_template, request, redirect, url_for, session, flash, g, abort
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import config
 import db
+import security
 
 bp = Blueprint("auth", __name__)
 
@@ -30,6 +31,18 @@ def login_required(view):
     def wrapped(*args, **kwargs):
         if not session.get("user_id"):
             return redirect(url_for("auth.login", next=request.path))
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def admin_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session.get("user_id"):
+            return redirect(url_for("auth.login", next=request.path))
+        user = current_user()
+        if not user or not user["is_admin"]:
+            abort(403)
         return view(*args, **kwargs)
     return wrapped
 
@@ -63,18 +76,23 @@ def login():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
+        wait = security.login_blocked(username)
+        if wait:
+            flash(f"Too many failed attempts. Try again in {wait // 60 + 1} min.", "error")
+            return render_template("login.html"), 429
         user = db.get_user_by_name(username)
         if user and check_password_hash(user["password_hash"], password):
+            security.clear_login_failures(username)
             session.clear()
             session["user_id"] = user["id"]
             session.permanent = True
-            nxt = request.args.get("next") or url_for("chat.index")
-            return redirect(nxt)
+            return redirect(security.safe_next(request.args.get("next"), url_for("chat.index")))
+        security.record_login_failure(username)
         flash("Invalid username or password.", "error")
     return render_template("login.html")
 
 
-@bp.route("/logout")
+@bp.route("/logout", methods=["POST"])
 def logout():
     session.clear()
     return redirect(url_for("auth.login"))

@@ -2,7 +2,7 @@
 
 Runs ONLY the device-facing STT ingestion API (+ provisioning UI), so it can be
 deployed as its own service on its own port — or even a separate machine — while
-sharing the same SQLite DB and Vosk model resolution as the main app.
+sharing the same SQLite DB and Whisper model resolution as the main app.
 
 Usage:
     python stt_service.py                       # run the service (default :5100)
@@ -20,6 +20,7 @@ from flask import Flask
 import config
 import db
 import devices
+import security
 from auth import bp as auth_bp
 from features import iot
 
@@ -29,6 +30,7 @@ def create_service():
     app.secret_key = config.SECRET_KEY
     app.config["SESSION_PERMANENT"] = True
     db.init_db()
+    security.init_app(app)
     app.register_blueprint(auth_bp)   # lets a human log in to provision devices
     iot.register(app)                 # device API (WS + HTTP) + provisioning UI
     return app

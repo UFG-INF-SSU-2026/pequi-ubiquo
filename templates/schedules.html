@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Scheduled tasks · TowerAI{% endblock %}
+{% block content %}
+<div class="iot-page">
+  <header class="iot-head"><a class="btn" href="{{ url_for('chat.index') }}">← Chat</a><h1>⏰ Scheduled tasks</h1></header>
+  <p class="muted">The assistant runs these on its own and posts the answer in the room — e.g. "Summarize this week's meetings and list open action items".</p>
+  <form class="iot-new" method="post">
+    <input name="prompt" placeholder="What should the assistant do?" maxlength="2000" required style="flex-basis:100%">
+    <select name="room">{% for r in rooms %}<option>{{ r.name }}</option>{% endfor %}</select>
+    <select name="kind" id="kind">
+      <option value="daily">Every day</option><option value="weekly">Every week</option><option value="interval">Every N minutes</option>
+    </select>
+    <select name="weekday" class="when weekly">{% for d in weekdays %}<option value="{{ loop.index0 }}">{{ d }}</option>{% endfor %}</select>
+    <input name="at_time" type="time" value="09:00" class="narrow when daily weekly">
+    <input name="every_min" type="number" min="5" value="60" class="narrow when interval" placeholder="minutes">
+    <button class="btn primary" type="submit">Schedule</button>
+  </form>
+  <table class="iot-table">
+    <thead><tr><th>Task</th><th>Room</th><th>When</th><th>Next run</th><th>Last result</th><th></th></tr></thead>
+    {% for s in items %}
+    <tr><td>{{ s.prompt }}<br><span class="muted">by {{ s.username or '—' }}</span></td><td>#{{ s.room }}</td><td>{{ describe(s) }}</td>
+      <td class="muted">{{ s.next_run|datetime }}</td><td class="muted">{{ (s.last_result or '—')|truncate(80) }}</td>
+      <td><form method="post" action="{{ url_for('admin.run_schedule', sid=s.id) }}" class="inline-form"><button class="btn" type="submit">Run now</button></form>
+        <form method="post" action="{{ url_for('admin.delete_schedule', sid=s.id) }}" class="inline-form"><button class="btn danger" type="submit">Delete</button></form></td></tr>
+    {% else %}<tr><td colspan="6" class="muted">No scheduled tasks yet.</td></tr>{% endfor %}
+  </table>
+</div>
+<script>
+  const kind = document.getElementById("kind");
+  function sync() { document.querySelectorAll(".when").forEach(el => el.hidden = !el.classList.contains(kind.value)); }
+  kind.addEventListener("change", sync); sync();
+</script>
+{% endblock %}
