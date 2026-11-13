@@ -35,6 +35,20 @@
     <button class="btn primary" type="submit">● Start recording</button>
   </form>
 
+  <form class="iot-new upload" method="post" enctype="multipart/form-data" action="{{ url_for('meetings.upload') }}">
+    <input type="file" name="recording" accept="audio/*,video/*" required>
+    <input name="title" placeholder="Title (optional)" maxlength="120">
+    <input name="room" placeholder="Room (default: general)" maxlength="32">
+    {% if diarization %}
+    <label class="opt"><input type="checkbox" name="diarize" checked> Label who said what</label>
+    <input class="narrow" type="number" name="num_speakers" min="1" max="20" placeholder="# speakers (optional)">
+    {% endif %}
+    <label class="opt"><input type="checkbox" name="summarize" checked> Summarize when done</label>
+    <button class="btn primary" type="submit">⬆ Upload recording</button>
+    <p class="muted hint-line">Any audio or video file up to {{ max_upload_mb }} MB. It's transcribed in the background on this machine.
+      {% if not diarization %}Speaker labels are off — run <code>python demo_setup.py --download-model</code> to enable them.{% endif %}</p>
+  </form>
+
   <table class="iot-table">
     <thead><tr><th>Meeting</th><th>Room</th><th>Started</th><th>Segments</th><th></th></tr></thead>
     <tbody>
@@ -42,10 +56,14 @@
       <tr>
         <td><a href="{{ url_for('meetings.view', meeting_id=m['id']) }}">{{ m['title'] or 'Meeting '+m['id']|string }}</a></td>
         <td>#{{ m['room'] }}</td>
-        <td class="muted">{{ m['started_at']|int }}</td>
+        <td class="muted">{{ m['started_at']|datetime }}</td>
         <td>{{ m['segment_count'] }}</td>
         <td>
-          {% if not m['ended_at'] %}
+          {% if m['status'] in ('queued', 'transcribing', 'diarizing', 'summarizing') %}
+          <span class="muted">⏳ {{ m['status'] }}</span>
+          {% elif m['status'] == 'error' %}
+          <span class="err">⚠ failed</span>
+          {% elif not m['ended_at'] %}
           <form method="post" action="{{ url_for('meetings.stop', meeting_id=m['id']) }}">
             <button class="btn danger" type="submit">■ Stop</button>
           </form>

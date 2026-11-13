@@ -1,19 +1,23 @@
 # Core (small, offline-friendly). Werkzeug ships with Flask.
 Flask>=3.0
 requests>=2.31
+urllib3>=2.3            # streamed replies arrive as they are generated (read1)
 flask-sock>=0.7         # WebSocket instant messaging (pulls in simple-websocket)
 python-dotenv>=1.0      # optional .env loading
 zeroconf>=0.131         # http://towerai.local discovery
 
 # Enabled features for the demo (transcription, IoT STT, network map, TLS):
-vosk>=0.3.45            # offline speech-to-text engine (default)
+faster-whisper>=1.0     # offline speech-to-text (Whisper, CPU or CUDA GPU)
+piper-tts>=1.2          # offline text-to-speech (voice in models/piper/)
+pypdf>=4.0              # text from PDFs shared in rooms (search + assistant)
+sherpa-onnx>=1.10       # offline speaker labels ("who said what") for uploaded recordings
 cryptography>=41.0      # self-signed TLS cert for remote microphone access
 
 # --- Optional features (install only when you use them) ---------------------
 # transcription / iot STT (offline):
-#   Vosk engine (default): pip install vosk  + a model (see features/README.md)
-#   Whisper engine (GPU-capable): pip install faster-whisper
-#       set STT_ENGINE=whisper  WHISPER_MODEL=small  (device auto-detects CUDA/CPU)
+#   Whisper via faster-whisper (above). Pick a model with WHISPER_MODEL=small
+#   (device auto-detects CUDA/CPU); pre-download it for offline use with
+#   `python demo_setup.py --download-model` (see features/README.md)
 # TLS (remote mic over HTTPS): pip install cryptography   (python serve.py --gen-cert)
 # Scaling across gunicorn workers: pip install redis      (set REDIS_URL)
 #   run: gunicorn -k gevent -w 4 -b 0.0.0.0:5000 app:app   (Linux)

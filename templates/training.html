@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Training data · TowerAI{% endblock %}
+{% block content %}
+<div class="iot-page">
+  <header class="iot-head"><a class="btn" href="{{ url_for('chat.index') }}">← Chat</a><h1>🧠 Learning from feedback</h1>
+    <a class="btn primary" href="{{ url_for('admin.training_export') }}">⬇ Export fine-tuning dataset (.jsonl)</a></header>
+  <p>👍 {{ stats.up }} · 👎 {{ stats.down }} · ✏️ {{ stats.corrected }} corrected answers</p>
+  <p class="muted">Every 👍 or corrected answer is used right away: the assistant is shown the most similar ones as examples before it answers. The export turns them into a LoRA fine-tuning dataset — see <code>training/README.md</code> for training a model and loading it in LM Studio.</p>
+  <table class="iot-table">
+    <thead><tr><th>Question</th><th>Answer used as an example</th><th>Score</th></tr></thead>
+    {% for q, a, score, mid in examples %}
+    <tr><td>{{ q|truncate(120) }}</td><td>{{ a|truncate(200) }}</td><td>{{ score }}</td></tr>
+    {% else %}<tr><td colspan="3" class="muted">No rated answers yet — use 👍 / 👎 under the assistant's replies in chat.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

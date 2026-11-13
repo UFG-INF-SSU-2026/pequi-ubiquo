@@ -7,7 +7,7 @@
     <ul class="room-list">
       {% for r in rooms %}
         <li class="{{ 'active' if r['name'] == room['name'] else '' }}">
-          <a href="{{ url_for('chat.room', name=r['name']) }}">#{{ r['name'] }}</a>
+          <a href="{{ url_for('chat.room', name=r['name']) }}">#{{ r['name'] }} <span class="badge" data-room-badge="{{ r['name'] }}" hidden></span></a>
         </li>
       {% endfor %}
     </ul>
@@ -27,23 +27,54 @@
     {% if 'netmap' in loaded_features %}
       <a class="btn" href="{{ url_for('netmap.page') }}">🌐 Network Map</a>
     {% endif %}
+    <a class="btn" href="{{ url_for('admin.schedules') }}">⏰ Scheduled tasks</a>
+    <a class="btn" href="{{ url_for('status.page') }}">🩺 Status</a>
+    {% if current_user['is_admin'] %}<a class="btn" href="{{ url_for('admin.tools') }}">🔐 Assistant permissions</a>
+    <a class="btn" href="{{ url_for('admin.training') }}">🧠 Training data</a>
+    <a class="btn" href="{{ url_for('admin.backup_page') }}">💾 Backups</a>{% endif %}
     <p class="hint">Tip: start a message with <code>@tower</code> to ask the AI.</p>
   </aside>
 
   <section class="chat-main"
            data-room="{{ room['name'] }}"
            data-me="{{ current_user['username'] }}"
-           data-assistant="{{ assistant_name }}">
-    <header class="room-head"># {{ room['name'] }}</header>
+           data-assistant="{{ assistant_name }}"
+           data-tts="{{ '1' if tts_available else '0' }}" data-lang="{{ stt_language }}">
+    <header class="room-head"><button class="btn nav-toggle" type="button" id="nav-toggle" aria-label="Menu">☰</button> # {{ room['name'] }} <a class="btn" href="{{ url_for('files.room_files', name=room['name']) }}">📎 Files</a></header>
     <div id="messages" class="messages"></div>
+    <div id="agent-status" class="media-status agent-status" hidden></div>
     <form id="composer" class="composer">
       <input id="msg" autocomplete="off" placeholder="Message #{{ room['name'] }}…" autofocus>
       <label class="ai-toggle" title="Also ask the AI">
         <input type="checkbox" id="askai"> AI
       </label>
+      {% if 'vision' in loaded_features %}
+      <input type="file" id="img-file" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+      <button class="btn" type="button" id="img-btn" title="Share an image and ask the AI about it (uses the text box as the question)">📷</button>
+      {% endif %}
+      {% if 'voice' in loaded_features %}
+      <button class="btn" type="button" id="mic-btn" title="Hold to talk to {{ assistant_name }}">🎤</button>
+      <button class="btn" type="button" id="hf-btn" title="Hands-free: talk to the assistant by saying its name">🎧</button>
+      {% endif %}
       <button class="btn primary" type="submit">Send</button>
     </form>
+    <div id="media-status" class="media-status" hidden></div>
   </section>
 </div>
+<script>
+  // Phones: ☰ opens the sidebar; tapping a link or outside closes it.
+  (function () {
+    const layout = document.querySelector(".chat-layout");
+    document.getElementById("nav-toggle").addEventListener("click", (e) => {
+      e.stopPropagation(); layout.classList.toggle("nav-open");
+    });
+    document.querySelector(".chat-main").addEventListener("click", () => layout.classList.remove("nav-open"));
+  })();
+</script>
 <script src="{{ url_for('static', filename='app.js') }}"></script>
+<script src="{{ url_for('static', filename='speak.js') }}"></script>
+{% if 'vision' in loaded_features or 'voice' in loaded_features %}
+<script src="{{ url_for('static', filename='media.js') }}"></script>
+{% endif %}
+{% if 'voice' in loaded_features %}<script src="{{ url_for('static', filename='handsfree.js') }}"></script>{% endif %}
 {% endblock %}

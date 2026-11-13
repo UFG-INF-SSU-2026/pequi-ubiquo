@@ -1,0 +1,26 @@
+# systemd unit: start TowerAI on boot and restart it if it crashes.
+#   sudo cp deploy/towerai.service /etc/systemd/system/
+#   sudo systemctl edit towerai     # adjust User / WorkingDirectory if needed
+#   sudo systemctl enable --now towerai
+#   journalctl -u towerai -f        # logs (rotated by journald)
+[Unit]
+Description=TowerAI offline collaboration appliance
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=towerai
+WorkingDirectory=/opt/towerai-mvp
+EnvironmentFile=-/opt/towerai-mvp/.env
+ExecStart=/opt/towerai-mvp/.venv/bin/python serve.py
+Restart=always
+RestartSec=5
+# Hardening: it only needs its own folder.
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/towerai-mvp
+
+[Install]
+WantedBy=multi-user.target

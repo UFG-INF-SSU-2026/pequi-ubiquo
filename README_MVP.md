@@ -2,8 +2,9 @@
 
 A small, self-contained web app that runs its **own local network service** for
 a group of people with **no internet**: shared chat rooms, accounts, persistent
-history, and a local AI assistant (via LM Studio / Ollama). Vision, voice, and
-transcription are designed in as **pluggable features** (see `features/`).
+history, and a local AI assistant with tools (via LM Studio / Ollama). Live
+captions, meetings, voice, vision, IoT microphones and a network map load as
+**pluggable features** (see `features/`). Planned work: [ROADMAP.md](ROADMAP.md).
 
 ## What it is (and isn't)
 
@@ -18,10 +19,11 @@ transcription are designed in as **pluggable features** (see `features/`).
 ```bash
 cd towerai-mvp
 python -m venv .venv && .venv\Scripts\activate     # Windows
+#   Linux/macOS: python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # Start a local model in LM Studio (port 1234) or Ollama, then:
-python serve.py          # production WSGI (waitress)  ← recommended
+python serve.py          # threaded server with WebSockets  ← recommended
 #   or
 python app.py            # Flask dev server
 ```
@@ -46,22 +48,115 @@ IP or `towerai.local`.
 | File | Role |
 |------|------|
 | `app.py` | App factory + optional-feature loader |
-| `serve.py` | Production entrypoint (waitress) |
+| `serve.py` | Server entrypoint (threaded, WebSockets, optional TLS) |
 | `config.py` | Env-driven settings; localhost-first LLM endpoint |
 | `db.py` | SQLite: users, rooms, messages |
+| `status.py` | Status page, model check (`python status.py`) |
+| `agent.py` | Agent harness: tool-calling loop for the local LLM (+ CLI) |
+| `admin.py` | Assistant permissions, training data (admins); scheduled tasks |
+| `scheduler.py` | Recurring assistant tasks (daily / weekly / every N min) |
+| `notifications.py` | @mentions, assigned action items, unread counts |
+| `files.py` | Shared files per room (searchable, readable by the assistant) |
+| `learning.py` | 👍/👎 feedback → in-context examples + fine-tuning export |
+| `voices.py` | Remembered voices (speaker embeddings) |
+| `vocab.py` | Learned vocabulary passed to Whisper |
+| `tts.py` | Offline text-to-speech (Piper) |
+| `evals/` | Agent evaluation set + runner against the real model |
+| `training/` | Fine-tuning guide for LM Studio models |
 | `llm.py` | Safe local LLM client (salvaged from old `send_chat_with_fallback`) |
 | `auth.py` | Register / login / logout / `login_required` |
 | `chat.py` | Shared rooms + AI participant (REST: history + fallback) |
 | `realtime.py` | WebSocket instant messaging (primary transport) |
 | `discovery.py` | mDNS `*.local` advertising (optional) |
-| `stt.py` | Shared STT engine — Vosk (streaming) or Whisper (GPU-capable) |
+| `stt.py` | Shared STT engine — Whisper (faster-whisper, CPU or GPU) |
 | `captions.py` | Shared per-room caption registry (+ meeting-record hook) |
 | `pubsub.py` | Broadcast fan-out — in-process, or Redis across workers |
 | `devices.py` | IoT device identity + API-key auth |
 | `tls_cert.py` | Self-signed cert generator (`serve.py --gen-cert`) |
 | `netmap.py` | Network mapping core (discovery + link telemetry) |
-| `features/meetings.py` | Stored, searchable meeting transcripts |
+| `features/vision.py` | Share images in chat; local vision model answers |
+| `features/voice.py` | Push-to-talk with the assistant (Whisper + browser TTS) |
+| `features/meetings.py` | Stored, searchable meetings: recording uploads, summaries, action items |
+| `recordings.py` | Uploaded recording → speaker-labeled transcript (Whisper + diarization) |
+| `diarize.py` | Offline speaker diarization — "who said what" (sherpa-onnx) |
+| `summarizer.py` | Meeting summary, decisions and action items via the local LLM |
 | `features/netmap.py` | Network Map UI + LLM-assisted analysis |
+
+## Agent (the assistant uses tools)
+
+When asked in chat (`@tower …`, the AI toggle, or 🎤), the assistant runs as an
+agent (`agent.py`): it can search meeting transcripts, read a meeting's summary,
+list and tick off action items across meetings, read or post in rooms,
+start/stop recordings, summarize a meeting, remember notes per room (shown to it
+in later conversations), list IoT devices, check the latest network scan, get
+the time, and calculate. It loops (model → tools → results → model) up to
+`AGENT_MAX_STEPS`; the room shows what it's doing live ("🔧 search_transcripts…")
+and replies list the tools used.
+
+- Guard rails: a repeated identical tool call gets the cached result back, and
+  a model going in circles is stopped and asked for its answer; old tool
+  results are trimmed to stay under `AGENT_MAX_CONTEXT_CHARS`.
+- Audit log: every run (who, room, request, tools, errors, time) is stored and
+  shown under **Assistant activity** on the status page.
+
+- Works with tool-calling models over the OpenAI-compatible API (LM Studio,
+  Ollama: Qwen 2.5/3, Llama 3.1+, Mistral…). Models without tool support fall
+  back automatically to a JSON-in-text protocol (`AGENT_PROTOCOL=text` forces it).
+- Safety: tools only touch TowerAI's own data — no shell, files or host
+  control. `AGENT_ALLOW_WRITES=0` makes it read-only; `AGENT_ENABLED=0` restores
+  the plain chat assistant.
+- API: `POST /api/agent {"prompt": "...", "room": "general"}` → reply + steps.
+- CLI: `python agent.py "what did we decide about the budget?"`
+  (`--list-tools`, `--protocol text`).
+- New tools: add a function with the `@tool(...)` decorator in `agent.py`.
+
+### Approvals, permissions, schedules, streaming, evaluation
+
+- **Confirm before acting** — tools marked ✋ (post a message, start/stop a
+  recording, tick off an item, forget a note, create/delete a schedule) don't
+  run when asked in chat: the reply shows **Approve / Reject** buttons for the
+  requester (or an admin). `AGENT_CONFIRM_ACTIONS=0` turns this off.
+- **Per-tool permissions** — the first account is admin; on **🔐 Assistant
+  permissions** admins set each tool to *everyone*, *admins* or *off*, and pick
+  other admins.
+- **Streaming** — the answer appears in the room as the model writes it
+  (`AGENT_STREAM`).
+- **Scheduled tasks** — **⏰ Scheduled tasks** (or ask the assistant): a prompt
+  that runs daily, weekly or every N minutes and posts its answer in a room.
+- **Evaluation** — `python evals/run.py [--model ID] [--protocol text]` runs the
+  questions in `evals/cases.json` against the real model on a seeded temporary
+  database and reports pass rate, tool-choice accuracy and latency.
+
+### Learning from feedback (LM Studio)
+
+👍/👎 under each assistant reply; 👎 lets you type the answer it should have
+given. The most similar well-rated or corrected answers are shown to the model
+as examples before it answers (`AGENT_FEW_SHOT`), so it improves immediately
+with any model. **🧠 Training data** (admins) exports them as a LoRA
+fine-tuning dataset; `training/README.md` covers training, converting to GGUF
+and loading the result in LM Studio.
+
+## Voices, vocabulary and hands-free
+
+- **🎧 Hands-free** in a room: speak naturally; sentences starting with
+  "Torre, …" / "Hey Tower, …" (`VOICE_WAKE_WORDS`) go to the assistant and the
+  answer is spoken. "Torre, parar" stops; "Torre, repetir" replays.
+- **Offline voice** — replies are spoken by Piper (`models/piper/`, Brazilian
+  Portuguese "faber" via `demo_setup.py --download-model`); 🔊 on any reply.
+- **Remembered voices** — rename "Speaker 2" → "Bruno" on a meeting and later
+  uploads suggest "Bruno?" when the voice clearly matches; confirm by renaming.
+  Live captions' **Shared mic** option labels speakers by voice. Short clips are
+  unreliable for voice matching, so suggestions need ≥ 6 s of speech and a
+  clear margin; calibrate with `python voices.py compare a.wav b.wav`.
+- **Vocabulary** — correct a transcript line (✎) and its new words are passed
+  to Whisper from then on; manage terms on **🎙 Voices & vocabulary**.
+
+## Shared files and notifications
+
+- **📎 Files** per room: upload/download; text, PDF and Word files are
+  searchable and readable by the assistant. Files are always served as downloads.
+- **🔔 Notifications** for @mentions, action items assigned to you by name and
+  scheduled-task runs; unread badges per room; optional desktop notifications.
 
 ## Network Map (device discovery + LLM analysis)
 
@@ -89,7 +184,7 @@ geographic coverage heatmap (needs GPS/RF).
 
 Network devices (ESP32 mics, Raspberry Pis, phones, other services) can send
 audio and get transcripts using an **API key** instead of a browser login. The
-same shared Vosk engine powers it, and transcripts optionally publish into a
+same shared Whisper engine powers it, and transcripts optionally publish into a
 room's Live Captions so IoT audio shows up live for people.
 
 Provision a key (human, logged in): open **📟 IoT Devices**, or headless:
@@ -112,13 +207,49 @@ curl -X POST "http://TOWER:5000/api/stt/transcribe?room=general" \
 Run it as an **independent microservice** on its own port (shares the same DB
 and model): `python stt_service.py` (default `:5100`).
 
-## Adding vision / voice / transcription
+## Adding features
 
-See `features/README.md`. In short: create `features/vision.py` exposing
-`register(app)`; it loads automatically on next start. Working logic from the old
-project (`lmstudio_vision.py`, `voice_tools.py`, `meeting_transcription.py`) can
-be lifted in behind `@login_required`.
+See `features/README.md`. In short: create `features/<name>.py` exposing
+`register(app)` and add the name to `config.OPTIONAL_FEATURES`; it loads
+automatically on next start, and a failure only disables that feature.
 
-## Health
+## Running it for real
 
-`GET /health` → live LLM status, active endpoint, available models, room count.
+- **As a service** (start on boot, restart on crash, rotated logs):
+  Linux `deploy/towerai.service` (systemd; instructions inside),
+  Windows `deploy/install-windows-service.ps1` (NSSM).
+- **Backups** — admins: **💾 Backups** → download a .zip (database + shared
+  files + images). Set `BACKUP_DIR` (e.g. a USB drive) for automatic backups
+  every `BACKUP_EVERY_HOURS`, keeping `BACKUP_KEEP`. Restore with the server
+  stopped: `python backup.py restore towerai-backup-….zip`.
+- **CI** — `.github/workflows/ci.yml` runs lint and the test suite on every push.
+
+## Security
+
+- Every page needs login except `/health`, which shows only up/down to anonymous callers; there are no shell or host-control endpoints.
+- CSRF protection on all forms and API calls (the page adds the token itself);
+  WebSockets from other sites are refused; device endpoints use API keys.
+- Logins are throttled (`LOGIN_MAX_FAILURES` per user in `LOGIN_WINDOW_SEC`,
+  4× that per address) and `next=` redirects stay on this site.
+
+## Tests
+
+```bash
+pip install pytest
+pytest -q
+```
+
+Runs offline in a few seconds: a fake LLM server and a stubbed Whisper model
+stand in for the real ones (`tests/conftest.py`).
+
+## Health and status
+
+- **🩺 Status page** (`/status`, login required; also `GET /api/status` as JSON):
+  AI server and model, Whisper and speaker models, loaded/failed features,
+  background jobs and their errors, storage, network addresses, HTTPS, Redis —
+  plus plain-language advice for anything that needs fixing.
+- **Model check** (button on the page, or `python status.py`): sends three tiny
+  requests to the local LLM — does it answer (and how fast), does it support
+  native tool calling (agent), and can it read an image (📷). `python status.py`
+  exits with code 1 when no LLM server answers.
+- `GET /health` → up/down for monitors; logged in, also the LLM endpoint, models and room count.

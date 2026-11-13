@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Voices & vocabulary · TowerAI{% endblock %}
+{% block content %}
+<div class="iot-page">
+  <header class="iot-head"><a class="btn" href="{{ url_for('meetings.index') }}">← Meetings</a><h1>🎙 Voices & vocabulary</h1></header>
+
+  <section class="notes-card">
+    <h2>Remembered voices</h2>
+    <p class="muted">{% if available %}Rename “Speaker 2” to a real name on a meeting page and TowerAI remembers that voice; later recordings and shared-mic live captions use the name automatically. Each rename makes the voiceprint more robust.{% else %}Speaker models aren't installed — run <code>python demo_setup.py --download-model</code>.{% endif %}</p>
+    <table class="iot-table">
+      {% for v in voices %}
+      <tr><td><strong>{{ v.name }}</strong></td><td class="muted">{{ v.samples }} sample{{ 's' if v.samples != 1 }} · updated {{ v.updated_at|datetime }}</td>
+        <td>{% if current_user.is_admin %}<form method="post" class="inline-form"><button class="btn danger" name="forget_voice" value="{{ v.id }}">Forget</button></form>{% endif %}</td></tr>
+      {% else %}<tr><td class="muted">No voices yet.</td></tr>{% endfor %}
+    </table>
+  </section>
+
+  <section class="notes-card">
+    <h2>Vocabulary</h2>
+    <p class="muted">Names and terms Whisper should spell right. Corrected transcript lines (✎ on a meeting) add new words automatically; usernames, rooms and voice names are always included.</p>
+    <form method="post" class="iot-new"><input name="add_term" placeholder="Add a name or term…" maxlength="64" required><button class="btn primary" type="submit">Add</button></form>
+    <p>{% for t in terms %}<span class="pill">{{ t.term }} <small class="muted">{{ t.source }}</small>
+      <form method="post" class="inline-form"><button class="x" name="remove_term" value="{{ t.term }}" title="Remove">×</button></form></span> {% endfor %}</p>
+    {% if glossary %}<p class="muted">Sent to Whisper: <code>{{ glossary }}</code></p>{% endif %}
+  </section>
+</div>
+{% endblock %}

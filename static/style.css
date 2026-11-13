@@ -53,6 +53,8 @@ main { flex: 1; min-height: 0; display: flex; }
 .card.auth .btn { width: 100%; margin-top: 8px; }
 .muted { color: var(--muted); }
 
+[hidden] { display: none !important; }  /* beats display rules like .badge's */
+
 /* Chat */
 .chat-layout { flex: 1; min-height: 0; display: flex; width: 100%; }
 .sidebar {
@@ -165,8 +167,85 @@ hr { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
 .nm-history-wrap > summary { cursor: pointer; color: var(--accent); margin-bottom: 10px; }
 .nm-cmp { font-size: 12px; padding: 4px 8px; }
 
-@media (max-width: 640px) {
-  .sidebar { width: 140px; }
+.nav-toggle { display: none; }
+@media (max-width: 700px) {
+  /* Phones: the sidebar becomes a slide-out menu (☰ in the room header). */
+  .nav-toggle { display: inline-block; }
+  .chat-layout { position: relative; overflow-x: hidden; }
+  .sidebar { position: absolute; z-index: 20; top: 0; bottom: 0; left: 0; width: min(280px, 85vw);
+    overflow-y: auto; transform: translateX(-105%); transition: transform .2s ease; box-shadow: 4px 0 18px #0008; }
+  .chat-layout.nav-open .sidebar { transform: none; }
+  .composer { padding: 8px; gap: 6px; flex-wrap: wrap; }
+  .composer input#msg { flex: 1 1 100%; min-width: 0; }
+  .composer .btn { padding: 6px 10px; }
+  .topbar .who { display: none; }
   .msg { max-width: 88%; }
   .transcript, .partial { font-size: 21px; }
 }
+
+/* Meetings: uploads, speaker labels, summaries */
+.iot-new.upload { align-items: center; }
+.iot-new .opt { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 14px; }
+.iot-new input.narrow { flex: 0 0 170px; min-width: 0; }
+.iot-new .hint-line { flex-basis: 100%; margin: 0; font-size: 13px; }
+.iot-new.speakers { align-items: center; }
+.iot-new.speakers select { padding: 8px; background: var(--bg); color: var(--text);
+  border: 1px solid var(--line); border-radius: 8px; }
+.err { color: #ffb4b4; }
+.job-banner { background: var(--panel); border: 1px solid #3a2f5c; border-radius: 10px;
+  padding: 10px 14px; margin-bottom: 16px; }
+.job-banner.error { border-color: #6e2a2a; color: #ffb4b4; }
+.notes-card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 14px 18px; margin-bottom: 18px; }
+.notes-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.notes-head h2 { font-size: 16px; margin: 0; }
+.notes-head form { margin: 0; }
+.notes-card h3 { font-size: 13px; text-transform: uppercase; color: var(--muted); margin: 14px 0 6px; }
+.notes-summary { white-space: pre-wrap; line-height: 1.55; }
+.action-items { list-style: none; padding: 0; margin: 0; }
+.action-items li { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; padding: 4px 0; }
+.action-items li.done .task { text-decoration: line-through; color: var(--muted); }
+.action-items form { margin: 0; }
+.action-items .check { background: none; border: 0; color: var(--text); font-size: 18px; cursor: pointer; padding: 0; }
+.pill { font-size: 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; color: var(--muted); }
+.transcript-doc .ts { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; margin-right: 8px; }
+.sp.c0 { color: #6fb3ff; } .sp.c1 { color: #f5a97f; } .sp.c2 { color: #8bd5a0; } .sp.c3 { color: #d7a6ff; }
+.sp.c4 { color: #f2d36b; } .sp.c5 { color: #ff8fa8; } .sp.c6 { color: #7fdbd5; } .sp.c7 { color: #c4c9d4; }
+.iot-new.speakers .sp { font-weight: 700; }
+
+/* Chat media (vision / voice) */
+.chat-img { display: block; max-width: min(320px, 100%); max-height: 260px; border-radius: 8px; margin: 4px 0; }
+.media-status { padding: 4px 16px 8px; font-size: 13px; color: var(--muted); background: var(--panel); }
+#mic-btn { touch-action: none; user-select: none; }
+
+/* Status page */
+.tip { padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--line); background: var(--panel); }
+.tip.error { border-color: #6e2a2a; color: #ffb4b4; }
+.tip.warn { border-color: #6b5a1e; color: #f2d36b; }
+.st-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0 16px; }
+.st-grid .notes-card h2 { font-size: 15px; margin: 0 0 8px; }
+.st-table td:first-child { color: var(--muted); width: 40%; }
+.st-table td { padding: 5px 8px; vertical-align: top; overflow-wrap: anywhere; }
+.st.ok { color: #8bd5a0; font-weight: 700; }
+.st.bad { color: #ff8fa8; font-weight: 700; }
+.inline-form { display: inline; margin: 0; }
+.agent-status { font-style: italic; }
+.st-table.runs td:first-child { width: auto; white-space: nowrap; }
+
+/* Notifications, approvals, streaming, files */
+.badge { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px;
+  background: #b5273a; color: #fff; font-size: 11px; line-height: 18px; text-align: center; font-weight: 700; }
+.bell { position: relative; }
+.confirm { display: block; margin-top: 6px; padding: 6px 8px; border: 1px dashed var(--line); border-radius: 8px; }
+.confirm code { white-space: pre-wrap; }
+.agent-status.streaming { font-style: normal; white-space: pre-wrap; color: var(--text); }
+.file-chip { display: inline-block; padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; }
+tr.unread td { font-weight: 600; }
+.opt-inline { margin-right: 12px; white-space: nowrap; }
+.seg-edit { background: none; border: 0; color: var(--muted); cursor: pointer; opacity: .4; }
+.seg:hover .seg-edit { opacity: 1; }
+.seg-form { display: flex; gap: 6px; margin: 4px 0 8px; }
+.seg-form input { flex: 1; padding: 6px 8px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; }
+.pill .x { background: none; border: 0; color: var(--muted); cursor: pointer; padding: 0 2px; }
+.msg .say { background: none; border: 0; cursor: pointer; opacity: .35; padding: 0 0 0 6px; } .msg:hover .say { opacity: 1; }
+.msg .rate button { background: none; border: 0; cursor: pointer; opacity: .35; padding: 0 2px; } .msg:hover .rate button { opacity: 1; } .msg .rate { font-size: 12px; color: var(--muted); }

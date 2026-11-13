@@ -5,6 +5,7 @@ NOT in the core; they load automatically if present in the features/ package.
 See features/README.md for the (tiny) contract.
 """
 import importlib
+from datetime import datetime
 
 from flask import Flask
 
@@ -20,7 +21,7 @@ def register_features(app: Flask):
     Each feature module must expose `register(app)`. Missing or broken features
     never take the core down.
     """
-    loaded = set()
+    loaded, failed = set(), {}
     for name in config.OPTIONAL_FEATURES:
         try:
             mod = importlib.import_module(f"features.{name}")
@@ -33,7 +34,17 @@ def register_features(app: Flask):
             app.logger.info(f"[feature] '{name}' loaded")
         except Exception as e:
             app.logger.warning(f"[feature] '{name}' failed to load: {e}")
+            failed[name] = str(e)[:300]
     app.config["LOADED_FEATURES"] = loaded
+    app.config["FAILED_FEATURES"] = failed  # shown on the status page
+
+
+def _tts_available():
+    try:
+        import tts
+        return tts.available()
+    except Exception:
+        return False
 
 
 def create_app() -> Flask:
@@ -42,6 +53,9 @@ def create_app() -> Flask:
     app.config["SESSION_PERMANENT"] = True
 
     db.init_db()
+
+    import security  # CSRF, WebSocket origin check
+    security.init_app(app)
 
     # Cross-worker broadcast fan-out (Redis if REDIS_URL set, else in-process).
     import pubsub
@@ -61,12 +75,27 @@ def create_app() -> Flask:
 
     register_features(app)
 
+    import status
+    status.register(app)
+
+    import admin  # tool permissions, scheduled tasks
+    admin.register(app)
+    import files  # shared files per room
+    files.register(app)
+    import scheduler
+    scheduler.start()
+
+    app.add_template_filter(
+        lambda ts: datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M") if ts else "", "datetime")
+
     @app.context_processor
     def inject_user():
         return {
             "current_user": current_user(),
             "assistant_name": config.ASSISTANT_NAME,
             "loaded_features": app.config.get("LOADED_FEATURES", set()),
+            "tts_available": _tts_available(),
+            "stt_language": config.WHISPER_LANGUAGE,
         }
 
     return app

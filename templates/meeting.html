@@ -1,5 +1,11 @@
 {% extends "base.html" %}
-{% block title %}{{ meeting['title'] or 'Meeting' }} · TowerAI{% endblock %}
+{% block title %}{{ meeting['title'] or 'Meeting' }} · TowerAI<script>
+  document.querySelectorAll(".seg-edit").forEach((b) => b.addEventListener("click", () => {
+    const f = b.nextElementSibling; f.hidden = !f.hidden; if (!f.hidden) f.querySelector("input").focus();
+  }));
+</script>
+{% endblock %}
+{% block head %}{% if running %}<meta http-equiv="refresh" content="3">{% endif %}{% endblock %}
 {% block content %}
 <div class="iot-page">
   <header class="iot-head">
@@ -8,13 +14,71 @@
     <a class="btn" href="{{ url_for('meetings.export', meeting_id=meeting['id']) }}">⬇ Export .txt</a>
   </header>
   <p class="muted">Room #{{ meeting['room'] }} · {{ segments|length }} segments
+    {% if meeting['source'] == 'upload' %}· uploaded recording{% endif %}
     {% if not meeting['ended_at'] %}· <strong style="color:#ff8080">● recording</strong>{% endif %}</p>
+
+  {% if running %}
+    <div class="job-banner">⏳ {{ meeting['status']|capitalize }}{% if meeting['status_detail'] %} — {{ meeting['status_detail'] }}{% endif %}
+      <span class="muted">(this page refreshes automatically)</span></div>
+  {% elif meeting['status'] == 'error' %}
+    <div class="job-banner error">⚠ {{ meeting['status_detail'] or 'Something went wrong.' }}</div>
+  {% endif %}
+
+  <section class="notes-card" id="actions">
+    <div class="notes-head">
+      <h2>Summary & action items</h2>
+      {% if segments and not running %}
+      <form method="post" action="{{ url_for('meetings.summarize', meeting_id=meeting['id']) }}">
+        <button class="btn primary" type="submit">🤖 {{ 'Regenerate' if notes else 'Summarize' }}</button>
+      </form>
+      {% endif %}
+    </div>
+    {% if notes %}
+      {% if notes.summary %}<p class="notes-summary">{{ notes.summary }}</p>{% endif %}
+      {% if notes.decisions %}
+        <h3>Decisions</h3>
+        <ul>{% for d in notes.decisions %}<li>{{ d }}</li>{% endfor %}</ul>
+      {% endif %}
+      <h3>Action items</h3>
+      {% if notes.action_items %}
+      <ul class="action-items">
+        {% for it in notes.action_items %}
+        <li class="{{ 'done' if it.done }}">
+          <form method="post" action="{{ url_for('meetings.toggle_action', meeting_id=meeting['id'], idx=loop.index0) }}">
+            <button class="check" type="submit" title="Mark {{ 'not done' if it.done else 'done' }}">{{ '☑' if it.done else '☐' }}</button>
+          </form>
+          <span class="task">{{ it.task }}</span>
+          {% if it.owner %}<span class="pill">👤 {{ it.owner }}</span>{% endif %}
+          {% if it.due %}<span class="pill">📅 {{ it.due }}</span>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="muted">No action items were found.</p>{% endif %}
+    {% elif not running %}
+      <p class="muted">{% if segments %}Generate a summary, decisions and action items with the local AI model.{% else %}Available once there is a transcript.{% endif %}</p>
+    {% endif %}
+  </section>
+
+  {% if speakers|length > 0 and not running %}
+  <form class="iot-new speakers" method="post" action="{{ url_for('meetings.rename_speaker', meeting_id=meeting['id']) }}">
+    <span class="muted">Speakers:</span>
+    {% for sp in speakers %}<span class="sp c{{ colors[sp['speaker']] }}">{{ sp['speaker'] }} <small class="muted">({{ sp['n'] }})</small></span>{% endfor %}
+    <select name="old">{% for sp in speakers %}<option>{{ sp['speaker'] }}</option>{% endfor %}</select>
+    <input name="new" placeholder="Rename to…" maxlength="64" required>
+    <button class="btn" type="submit">Rename</button>
+    <a class="muted" href="{{ url_for('meetings.voices_page') }}">🎙 Voices & vocabulary</a>
+  </form>
+  {% endif %}
 
   <div class="transcript-doc">
     {% for s in segments %}
-      <div class="seg"><span class="sp">{{ s['speaker'] }}</span> {{ s['text'] }}</div>
+      <div class="seg" id="seg-{{ s['id'] }}">{% if s['start_sec'] is not none %}<span class="ts">{{ fmt(s['start_sec']) }}</span>{% endif %}<span class="sp c{{ colors[s['speaker']] }}">{{ s['speaker'] }}</span> <span class="seg-text">{{ s['text'] }}</span>
+        <button class="seg-edit" type="button" title="Correct this line (teaches TowerAI new words)">✎</button>
+        <form method="post" action="{{ url_for('meetings.edit_segment', meeting_id=meeting['id'], segment_id=s['id']) }}" class="seg-form" hidden>
+          <input name="text" value="{{ s['text'] }}" maxlength="2000"><button class="btn primary" type="submit">Save</button>
+        </form></div>
     {% else %}
-      <p class="muted">No transcript yet. Start Live Captions in this room while recording.</p>
+      {% if not running %}<p class="muted">No transcript yet. Start Live Captions in this room while recording.</p>{% endif %}
     {% endfor %}
   </div>
 </div>

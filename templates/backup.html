@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Backups · TowerAI{% endblock %}
+{% block content %}
+<div class="iot-page">
+  <header class="iot-head"><a class="btn" href="{{ url_for('chat.index') }}">← Chat</a><h1>💾 Backups</h1>
+    <form method="post" action="{{ url_for('admin.backup_download') }}" class="inline-form"><button class="btn primary" type="submit">⬇ Download a backup now</button></form></header>
+  <p class="muted">A backup is one .zip with the database (accounts, rooms, messages, meetings, notes, voices…) plus shared files and chat images. Models aren't included — <code>python demo_setup.py --download-model</code> fetches them again.</p>
+  <section class="notes-card">
+    <h2>Automatic backups</h2>
+    {% if backup_dir %}
+    <p>Every {{ every }} h to <code>{{ backup_dir }}</code>, keeping the newest {{ keep }}.</p>
+    <table class="iot-table">{% for b in backups %}<tr><td>{{ b.name }}</td><td class="muted">{{ (b.stat().st_size / 1048576)|round(1) }} MB</td></tr>{% else %}<tr><td class="muted">None yet — the first one is written within a minute.</td></tr>{% endfor %}</table>
+    {% else %}
+    <p class="muted">Off. Set <code>BACKUP_DIR</code> (for example a USB drive) in <code>.env</code> and restart.</p>
+    {% endif %}
+  </section>
+  <p class="muted">Restore: stop the server, run <code>python backup.py restore towerai-backup-….zip</code>, start it again. The current data is kept as <code>*.before-restore-…</code>.</p>
+</div>
+{% endblock %}

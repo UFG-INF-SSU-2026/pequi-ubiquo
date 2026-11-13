@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Files · #{{ room['name'] }} · TowerAI{% endblock %}
+{% block content %}
+<div class="iot-page">
+  <header class="iot-head"><a class="btn" href="{{ url_for('chat.room', name=room['name']) }}">← #{{ room['name'] }}</a><h1>📎 Files in #{{ room['name'] }}</h1></header>
+  <form class="iot-new" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" multiple required>
+    <button class="btn primary" type="submit">⬆ Upload</button>
+    <p class="muted hint-line">Up to {{ max_mb }} MB each. Everyone in the room can download them; the assistant can search and read text, PDF and Word files.</p>
+  </form>
+  <table class="iot-table">
+    <thead><tr><th>File</th><th>Size</th><th>Shared by</th><th>When</th><th></th></tr></thead>
+    {% for f in files %}
+    <tr><td><a href="{{ url_for('files.download', file_id=f.id) }}">{{ f.filename }}</a>{% if f.text_len %} <span class="pill" title="The assistant can read this file">📖 readable</span>{% endif %}</td>
+      <td class="muted">{{ (f.size / 1024)|round(1) }} KB</td><td>{{ f.username or '—' }}</td><td class="muted">{{ f.created_at|datetime }}</td>
+      <td>{% if current_user.is_admin or f.uploaded_by == current_user.id %}<form method="post" action="{{ url_for('files.remove', file_id=f.id) }}" class="inline-form"><button class="btn danger" type="submit">Delete</button></form>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="5" class="muted">No files yet.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

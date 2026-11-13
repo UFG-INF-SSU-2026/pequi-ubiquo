@@ -27,7 +27,7 @@
   function connect() {
     ws = new WebSocket(wsUrl);
     ws.binaryType = "arraybuffer";
-    ws.onopen = () => { statusEl.textContent = "connected"; };
+    ws.onopen = () => { statusEl.textContent = "connected"; sendOpts(); };
     ws.onmessage = (ev) => {
       let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
       if (m.type === "partial") {
@@ -47,6 +47,14 @@
     ws.onerror = () => { try { ws.close(); } catch (e) {} };
   }
   connect();
+
+  // Shared microphone: ask the server to label speakers by voice.
+  const sharedMic = document.getElementById("sharedMic");
+  function sendOpts() {
+    if (sharedMic && ws && ws.readyState === WebSocket.OPEN)
+      ws.send(JSON.stringify({ speakers: sharedMic.checked }));
+  }
+  if (sharedMic) sharedMic.addEventListener("change", sendOpts);
 
   function sendChunk(buf) {
     if (capturing && ws && ws.readyState === WebSocket.OPEN) ws.send(buf);

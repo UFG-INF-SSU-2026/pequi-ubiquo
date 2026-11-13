@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Notifications · TowerAI{% endblock %}
+{% block content %}
+<div class="iot-page">
+  <header class="iot-head"><a class="btn" href="{{ url_for('chat.index') }}">← Chat</a><h1>🔔 Notifications</h1></header>
+  <p><button class="btn" type="button" id="enable-desktop">Enable desktop notifications</button></p>
+  <table class="iot-table">
+    {% for n in items %}
+    <tr class="{{ 'unread' if not n.read }}"><td class="muted">{{ n.created_at|datetime }}</td>
+      <td>{% if n.link %}<a href="{{ n.link }}">{{ n.text }}</a>{% else %}{{ n.text }}{% endif %}</td></tr>
+    {% else %}<tr><td class="muted">Nothing yet.</td></tr>{% endfor %}
+  </table>
+</div>
+<script>
+  document.getElementById("enable-desktop").onclick = () => "Notification" in window && Notification.requestPermission();
+</script>
+{% endblock %}
