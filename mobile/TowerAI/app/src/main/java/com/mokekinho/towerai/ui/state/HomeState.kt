@@ -29,6 +29,8 @@ class HomeViewModel(): ViewModel() {
     private val _state = MutableStateFlow(HomeState())
     val state: StateFlow<HomeState> = _state.asStateFlow()
 
+    private var audioSender: AudioSender? = null
+
     fun onEvent(event: HomeEvent) {
         when (event) {
             is HomeEvent.ServerIpChanged -> _state.update { it.copy(serverIp = event.serverIp) }
@@ -42,15 +44,17 @@ class HomeViewModel(): ViewModel() {
         viewModelScope.launch {
             val audioSender = AudioSender(
                 serverIp = state.value.serverIp,
-                serverPort = 30000
+                serverPort = 5000
             )
             audioSender.start()
         }
 
     }
 
-    fun stopAudio(){
-
+    private fun stopAudio(){
+        // Para o WebSocket e o loop de gravação
+        audioSender?.stop()
+        audioSender = null
     }
 
 

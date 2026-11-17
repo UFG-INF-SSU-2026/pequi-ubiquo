@@ -95,7 +95,7 @@ fun Home(
             )
             TextButton(
                 onClick = {
-
+                    viewModel.onEvent(HomeEvent.StopAudio)
                 }
             ) {
                 Text("Stop")
