@@ -37,6 +37,8 @@ fun Home(
     val state by viewModel.state.collectAsState()
 
     val serverIp = state.serverIp
+    val apiKey = state.apiKey
+
     val context = LocalContext.current
     val activity = context as? Activity // Transforma o contexto em Activity
     //val microphoneAccess = state.microphoneAccess
@@ -61,6 +63,15 @@ fun Home(
             },
             label = {
                 Text("Type the IP showed on your PC")
+            }
+        )
+        OutlinedTextField(
+            value = apiKey,
+            onValueChange = {
+                viewModel.onEvent(HomeEvent.ApiKeyChanged(it))
+            },
+            label = {
+                Text("Type the ApiKey showed on your PC")
             }
         )
 

@@ -15,7 +15,11 @@ import okio.ByteString.Companion.toByteString
 class AudioSender(
     val serverIp: String,
     val serverPort: Int,
+    val apiKey: String,
+    val roomName: String = "general",
 ) {
+
+
 
     val audioSource = MediaRecorder.AudioSource.MIC //Defini o dispositivo de entrada
 
@@ -40,8 +44,7 @@ class AudioSender(
     suspend fun start(){
         isStreaming = true
         // Conectando ao WebSocket do Flask
-        val roomName = "geral" // Ou o nome da sala que você está utilizando no chat
-        val url = "ws://$serverIp:$serverPort/voice/ws/voice/$roomName"
+        val url = "ws://$serverIp:$serverPort/api/stt/stream?key=$apiKey&room=$roomName"
         val request = Request.Builder().url(url).build()
 
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
