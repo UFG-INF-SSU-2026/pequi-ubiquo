@@ -1,6 +1,7 @@
 """API LAN, decisão de sala e processamento persistente do Marco 4."""
 
 import hashlib
+import io
 import json
 import logging
 import math
@@ -235,6 +236,46 @@ class Database:
             )
             return {"meetings": [self._result(row) for row in rows]}
 
+    @staticmethod
+    @contextmanager
+    def read_only(path):
+        """Consulta local do painel, mesmo com a API parada e sem criar um banco."""
+        path = Path(path)
+        if not path.is_file():
+            yield None
+            return
+        uri = path.resolve().as_uri() + "?mode=ro"
+        with closing(sqlite3.connect(uri, uri=True, timeout=10)) as db:
+            db.row_factory = sqlite3.Row
+            db.execute("BEGIN")
+            yield db
+
+    @classmethod
+    def exportable_meetings(cls, path):
+        with cls.read_only(path) as db:
+            if db is None:
+                return []
+            rows = db.execute(
+                "SELECT id, room, title, started_at, gap, processing FROM captures "
+                "WHERE started_at IS NOT NULL AND ended_at IS NOT NULL ORDER BY started_at DESC, id DESC"
+            )
+            return [dict(row) for row in rows]
+
+    @classmethod
+    def export_meeting(cls, path, capture_id):
+        with cls.read_only(path) as db:
+            if db is None:
+                return None
+            row = db.execute(
+                "SELECT * FROM captures WHERE id=? AND started_at IS NOT NULL AND ended_at IS NOT NULL",
+                (capture_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            with io.BytesIO() as output:
+                has_audio = cls._write_wave(db, capture_id, output)
+                return cls._result(row, detail=True), output.getvalue() if has_audio else None
+
     def add_audio(self, device, capture_id, sequence, pcm, captured_at):
         now = self.clock()
         digest = hashlib.sha256(pcm).hexdigest()
@@ -346,12 +387,18 @@ class Database:
             return row
 
     def write_wave(self, capture_id, path):
-        with self.connection() as db, wave.open(str(path), "wb") as wav:
+        with self.connection() as db:
+            self._write_wave(db, capture_id, str(path))
+
+    @staticmethod
+    def _write_wave(db, capture_id, destination):
+        with wave.open(destination, "wb") as wav:
             wav.setparams((1, 2, RATE, 0, "NONE", "not compressed"))
             for row in db.execute(
                 "SELECT pcm FROM audio WHERE capture_id=? AND pcm IS NOT NULL ORDER BY seq", (capture_id,),
             ):
                 wav.writeframesraw(row["pcm"])
+            return wav.tell() > 0
 
     def save_transcript(self, capture_id, segments):
         with self.connection(write=True) as db:
@@ -359,7 +406,6 @@ class Database:
                 "UPDATE captures SET transcript=?, processing='GERANDO_ATA' WHERE id=?",
                 (json.dumps(segments, ensure_ascii=False), capture_id),
             )
-            db.execute("UPDATE audio SET pcm=NULL WHERE capture_id=?", (capture_id,))
 
     def save_minutes(self, capture_id, minutes):
         with self.connection(write=True) as db:

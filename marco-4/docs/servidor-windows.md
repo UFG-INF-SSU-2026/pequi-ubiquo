@@ -1,6 +1,6 @@
 # TowerAI Servidor no Windows
 
-Instale `TowerAI-Servidor-Setup.exe` no PC que receberá o áudio. O instalador é para Windows 10 ou 11 x64 e inclui o ambiente de execução, o servidor HTTPS, o llama.cpp e os pesos do detector YOLOX-S. A opção de baixar os pesos de transcrição e ata já vem marcada. Ao abrir o TowerAI pela última tela do instalador, os downloads dos modelos restantes começam em segundo plano. Você pode configurar a rede, o microfone e a webcam enquanto os pesos são baixados.
+Instale `TowerAI-Servidor-Setup-4.1.3.exe` no PC que receberá o áudio. O instalador é para Windows 10 ou 11 x64 e inclui o ambiente de execução, o servidor HTTPS, o llama.cpp e os pesos do detector YOLOX-S. A opção de baixar os pesos de transcrição e ata já vem marcada. Ao abrir o TowerAI pela última tela do instalador, os downloads dos modelos restantes começam em segundo plano. Você pode configurar a rede, o microfone e a webcam enquanto os pesos são baixados.
 
 ## Configurar pela primeira vez
 
@@ -22,6 +22,12 @@ O **Painel** atualiza a cada 750 ms e mostra, para a sala selecionada:
 - **Processamento da ata** na fila, em transcrição, em geração de ata, concluído ou com falha. O histórico e a ata ficam disponíveis no Android.
 
 Os controles da rede mostram se a autorização TCP 8443 está ativa. Se o endereço do PC mudar, selecione a interface atual e gere o certificado para o novo endereço. Quando a CA mudar, exporte e importe o novo `ca.pem` no Android.
+
+## Exportar o histórico da reunião em PDF
+
+Abra **Histórico**, selecione uma reunião encerrada e clique em **Exportar PDF…**. O documento reúne dados e avisos da captura, a ata, as decisões, as ações e a transcrição com marcações de tempo. A exportação funciona com o servidor parado. Use **Atualizar lista** para obter o estado mais recente do processamento.
+
+Desde a versão 4.1.3, o servidor preserva a gravação das reuniões no banco local. Quando disponível, ela acompanha o PDF no anexo `audio-da-reuniao.wav`. Abra o painel de anexos de um leitor de PDF que ofereça esse recurso. As reuniões que já tiveram o áudio descartado pelas versões anteriores continuam exportáveis com os dados disponíveis.
 
 ## Dados, migração e diagnóstico
 
@@ -46,4 +52,4 @@ $towerPython = '.\servidor\.venv\Scripts\python.exe'
 & '.\instalador\compilar.ps1'
 ```
 
-O executável de instalação fica em `instalador/saida/TowerAI-Servidor-Setup.exe`. Use `-Llama` e `-Inno` para indicar caminhos diferentes dos padrões do script.
+O executável de instalação fica em `instalador/saida/TowerAI-Servidor-Setup-4.1.3.exe`. Use `-Llama` e `-Inno` para indicar caminhos diferentes dos padrões do script.

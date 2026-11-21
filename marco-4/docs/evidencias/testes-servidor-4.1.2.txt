@@ -1,0 +1,28 @@
+test_certificado_e_historico_da_instalacao_anterior_sao_reutilizados (test_desktop_runtime.DesktopRuntimeTest.test_certificado_e_historico_da_instalacao_anterior_sao_reutilizados) ... ok
+test_download_reaproveita_whisper_e_so_publica_gguf_verificado (test_desktop_runtime.DesktopRuntimeTest.test_download_reaproveita_whisper_e_so_publica_gguf_verificado) ... ok
+test_painel_acompanha_microfone_da_sala_e_estado_da_ata (test_desktop_runtime.DesktopRuntimeTest.test_painel_acompanha_microfone_da_sala_e_estado_da_ata) ... ok
+test_audio_atrasado_vai_ao_historico_sem_reabrir_contexto (test_fluxo.FluxoTest.test_audio_atrasado_vai_ao_historico_sem_reabrir_contexto) ... ok
+test_dois_produtores_mudam_a_decisao_e_ata_sobrevive_ao_reinicio (test_fluxo.FluxoTest.test_dois_produtores_mudam_a_decisao_e_ata_sobrevive_ao_reinicio) ... 127.0.0.1 - - [21/Nov/2026 01:57:39] PUT 409
+ok
+test_falha_da_ata_preserva_transcricao_e_reprocessa_so_a_ata (test_fluxo.FluxoTest.test_falha_da_ata_preserva_transcricao_e_reprocessa_so_a_ata) ... ok
+test_identidade_e_autorizacao (test_fluxo.FluxoTest.test_identidade_e_autorizacao) ... 127.0.0.1 - - [21/Nov/2026 01:57:41] GET 401
+127.0.0.1 - - [21/Nov/2026 01:57:41] GET 403
+127.0.0.1 - - [21/Nov/2026 01:57:41] PUT 404
+127.0.0.1 - - [21/Nov/2026 01:57:41] PUT 403
+127.0.0.1 - - [21/Nov/2026 01:57:41] PUT 403
+127.0.0.1 - - [21/Nov/2026 01:57:41] POST 403
+ok
+test_presenca_expira_e_amostra_atrasada_nao_reescreve_o_contexto (test_fluxo.FluxoTest.test_presenca_expira_e_amostra_atrasada_nao_reescreve_o_contexto) ... ok
+test_queda_da_rede_suspende_e_reenvio_recupera_sem_duplicar (test_fluxo.FluxoTest.test_queda_da_rede_suspende_e_reenvio_recupera_sem_duplicar) ... 127.0.0.1 - - [21/Nov/2026 01:57:42] PUT 409
+ok
+test_tls_recusa_ca_desconhecida_e_nome_ausente_no_certificado (test_fluxo.FluxoTest.test_tls_recusa_ca_desconhecida_e_nome_ausente_no_certificado) ... ok
+test_missing_database_keeps_new_installation_empty (test_minutes_pdf.MinutesExportTest.test_missing_database_keeps_new_installation_empty) ... ok
+test_reads_existing_ready_minutes_and_writes_paginated_pdf (test_minutes_pdf.MinutesExportTest.test_reads_existing_ready_minutes_and_writes_paginated_pdf) ... ok
+test_formato_da_ata_e_campos_ausentes_na_transcricao (test_models.ModelsTest.test_formato_da_ata_e_campos_ausentes_na_transcricao) ... ok
+test_texto_so_pode_ser_enviado_a_um_modelo_de_loopback (test_models.ModelsTest.test_texto_so_pode_ser_enviado_a_um_modelo_de_loopback) ... ok
+test_transcricao_aceita_apenas_whisper_large_v3_e_turbo (test_models.ModelsTest.test_transcricao_aceita_apenas_whisper_large_v3_e_turbo) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 8.890s
+
+OK

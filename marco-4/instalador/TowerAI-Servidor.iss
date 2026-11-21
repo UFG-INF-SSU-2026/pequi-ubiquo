@@ -1,5 +1,5 @@
 #define AppName "TowerAI Servidor"
-#define AppVersion "4.1.1"
+#define AppVersion "4.1.3"
 
 [Setup]
 AppId={{C016F406-11CC-43FA-8866-07EF2E1467E0}
@@ -10,7 +10,7 @@ DefaultDirName={autopf}\TowerAI Servidor
 DefaultGroupName={#AppName}
 UninstallDisplayIcon={app}\TowerAI-Servidor.exe
 OutputDir=saida
-OutputBaseFilename=TowerAI-Servidor-Setup
+OutputBaseFilename=TowerAI-Servidor-Setup-{#AppVersion}
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0

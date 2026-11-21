@@ -8,11 +8,23 @@
 | 1:30–3:00 | Mostrem o servidor e o produtor da webcam, o APK aberto, a mesma LAN e o certificado. Omitam tokens e chaves da captura de tela. |
 | 3:00–5:00 | Ativem o microfone. Com a sala vazia na webcam, produzam áudio e mostrem o estado de espera. Depois, enquadrem uma pessoa, falem e mostrem a abertura. |
 | 5:00–6:30 | Desliguem o Wi-Fi do telefone por cerca de 8 s durante a captura. Mostrem a reconexão e qualidade incompleta. Para exibir `SUSPENSA` enquanto o Android estiver desconectado, consultem a API no notebook com uma credencial de teste da sala. |
-| 6:30–8:30 | Encerrem a captura, mostrem a transcrição e a ata. Reiniciem a API e recuperem a mesma ata pelo histórico. |
+| 6:30–8:30 | Encerrem a captura, mostrem a transcrição e a ata. Reiniciem a API, recuperem a reunião e exportem o PDF pela aba **Histórico**. Mostrem a transcrição e abram o WAV no painel de anexos do leitor de PDF. |
 | 8:30–10:30 | Rodem os testes ou mostrem a execução com os resultados. Expliquem a rejeição por credencial, papel, CA e nome do serviço. |
 | 10:30–12:00 | Expliquem uma limitação observada e as contribuições individuais. Registrem a versão demonstrada e mostrem onde estão o artigo e as instruções. |
 
 Usem uma reunião fictícia, com decisões e tarefas fáceis de conferir. Confirmem o áudio captado, a visibilidade da câmera, o tempo de processamento e o acesso do professor ao vídeo antes da entrega. A captura da tela pode usar o gravador do Android ou o espelhamento USB já disponível ao grupo. No vídeo, todos os integrantes devem participar.
+
+## Artigo e apresentação
+
+O [artigo](artigo.pdf) usa o estilo SBC. A [apresentação](apresentacao.pdf) usa o tema Beamer UFG e tem notas de fala no [arquivo LaTeX](templates%20latex/template_slide/towerai-marco-4.tex), com um roteiro para cerca de 12 minutos.
+
+Para recompilar os dois PDFs, instale o Tectonic no PATH e rode, a partir de `marco-4`:
+
+```sh
+python docs/compilar_documentos.py
+```
+
+Para gerar um único PDF, acrescente `artigo` ou `apresentacao` ao comando. A compilação inicial pode baixar pacotes LaTeX. As fontes e as imagens ficam junto aos templates fornecidos.
 
 ## Registro de entrega
 

@@ -34,7 +34,7 @@ O Android utiliza o cabeçalho `Date` da resposta HTTPS de abertura e o tempo mo
 
 O limiar de RMS mede energia, que é uma aproximação de fala. O áudio é limitado a dez minutos persistidos por reunião. A conexão pode manter até 120 blocos pendentes em memória no Android. Se o app sair do primeiro plano, cessa a captação e tenta entregar a fila. O estado `ABERTA` segue a continuidade dos eventos, e a presença funciona como contexto de abertura.
 
-Os estados de processamento são `AGUARDANDO`, `PENDENTE`, `TRANSCREVENDO`, `GERANDO_ATA`, `PRONTA`, `FALHOU` e `DESCARTADA`. A inicialização recoloca trabalhos interrompidos na fila. Áudio bruto fica no SQLite até persistir a transcrição, e o WAV de trabalho é temporário. Intervalos sem blocos recebidos são marcados por qualidade incompleta. Os offsets correspondem ao áudio recebido e concatenado.
+Os estados de processamento são `AGUARDANDO`, `PENDENTE`, `TRANSCREVENDO`, `GERANDO_ATA`, `PRONTA`, `FALHOU` e `DESCARTADA`. A inicialização recoloca trabalhos interrompidos na fila. Na versão 4.1.3, os blocos PCM das reuniões iniciadas ficam no SQLite após a transcrição. O WAV de trabalho é temporário. A exportação no painel local envolve o mesmo áudio em um WAV PCM16 sem compressão e o anexa ao PDF. A API de consulta do Android continua a fornecer metadados, ata e transcrição. Intervalos sem blocos recebidos são marcados por qualidade incompleta. Os offsets correspondem ao áudio recebido e concatenado.
 
 ## Formato da ata
 

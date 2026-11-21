@@ -1,0 +1,337 @@
+\documentclass[12pt]{article}
+\usepackage{sbc-template}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{graphicx,booktabs,tabularx,array,float}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds,babel}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{TowerInk}{HTML}{29213D}
+\definecolor{TowerViolet}{HTML}{594786}
+\definecolor{TowerPale}{HTML}{F1EDF8}
+\definecolor{TowerTeal}{HTML}{216A65}
+\definecolor{TowerIce}{HTML}{EAF5F2}
+\definecolor{TowerWarm}{HTML}{FAF1E4}
+\tikzset{
+  component/.style={draw=TowerViolet,fill=TowerPale,text=TowerInk,rounded corners=3pt,
+    minimum height=10mm,align=center,font=\small\sffamily,inner sep=4pt},
+  endpoint/.style={component,draw=TowerTeal,fill=TowerIce},
+  stage/.style={component,fill=TowerWarm},
+  flow/.style={-{Stealth[length=2.2mm]},thick,draw=TowerViolet},
+  edge label/.style={font=\footnotesize\sffamily,text=TowerInk,align=center,fill=white,inner sep=1pt},
+  boundary/.style={draw=TowerViolet!40,rounded corners=5pt,inner sep=6pt,dashed}
+}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\setlength{\emergencystretch}{1.5em}
+\newcommand{\state}[1]{\texttt{#1}}
+\newcommand{\docpath}[1]{\path{#1}}
+\hypersetup{pdftitle={TowerAI: registro de reuniões com contexto e processamento local},
+  pdfauthor={Thiago Nascente, Samuel Machado, Moisés Protázio, Vinícius Benevides}}
+
+\title{TowerAI: Registro de Reuniões com Contexto e Processamento Local}
+\author{Thiago Nascente\inst{1}, Samuel Machado\inst{1}, Moisés Protázio\inst{1}, Vinícius Benevides\inst{1}}
+\address{Instituto de Informática -- Universidade Federal de Goiás (UFG)\\
+Engenharia de Software -- Software para Sistemas Ubíquos (INF0483)\\
+Equipe Pequi Ubíquo -- Goiânia, GO -- Brasil}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+TowerAI combines Android microphone audio with webcam occupancy estimates to recognize and record meetings. A laptop validates incoming events, protects LAN traffic with HTTPS, applies a context-dependent capture policy and stores results in SQLite. Local speech recognition and text generation produce a transcript and structured minutes. Users review the result on Android and export the meeting history to PDF from a desktop panel, with the saved recording attached as WAV. Automated checks exercise state transitions, authorization, retry and persistence. An experiment with synthetic Portuguese speech and injected presence events demonstrates local inference and recovery after restart.
+\end{abstract}
+
+\begin{resumo}
+O TowerAI combina áudio de um Android e estimativas de ocupação de uma webcam para reconhecer e registrar reuniões. Um notebook valida os eventos, protege a comunicação pela LAN com HTTPS, aplica uma política de captura ciente de contexto e persiste os resultados no SQLite. O reconhecimento de fala e a geração de texto locais produzem transcrição e ata estruturada. O Android permite revisar o resultado. O painel do servidor exporta o histórico em PDF com a gravação em WAV quando disponível. Testes automatizados verificam transições, autorização, reenvio e persistência. Um ensaio com fala sintética em português e presença injetada demonstra a inferência local e a recuperação após reinício.
+\end{resumo}
+
+\noindent\textbf{Palavras-chave} \enspace sistemas ubíquos, contexto, computação de borda, reconhecimento de fala, atas de reunião.
+
+\section{Introdução}
+
+Reuniões de estudo e de planejamento produzem decisões que se perdem em anotações dispersas. Delegar o registro a um participante divide sua atenção. Gravar continuamente, por sua vez, amplia o volume de dados e a exposição de conversas alheias ao encontro. O TowerAI propõe um caminho intermediário para grupos que já compartilham uma sala e uma rede local. Um participante arma o microfone do telefone. O ambiente fornece sinais para decidir se a reunião começou, e o notebook produz um registro consultável depois do encerramento.
+
+O problema investigado é se dois sinais simples de contexto, combinados com confirmação de entrega, sustentam a produção de um registro recuperável com processamento no próprio ambiente. A hipótese é que uma leitura visual válida de sala vazia permite bloquear aberturas provocadas por som ambiente e que regras explícitas de validade, silêncio e indisponibilidade tornam o comportamento observável. A avaliação verifica a implementação dessas regras, o fluxo distribuído e a viabilidade do processamento local. A capacidade de generalizar para salas e usuários diferentes depende de coletas adicionais.
+
+O trabalho contribui com um protótipo que inclui dois produtores independentes, política de abertura e encerramento, transporte autenticado, fila persistente, aplicativo nativo e painel de operação. O Android serve como instrumento de captura e de revisão. No notebook, a exportação em PDF reúne os registros da reunião em um documento. O artigo reúne a evolução do projeto, a arquitetura, os contratos de informação, a implementação, o método de avaliação e os resultados observados.
+
+\subsection{Evolução entre os marcos}
+
+O Marco 1 formulou um cenário de colaboração multimodal em rede local e modelou a relação entre sensores, gateway e processamento de borda. O Marco 2 reduziu o escopo a um fluxo verificável de microfone ESP32: mudanças de estado iam por MQTT a um consumidor Python, com ACK, reenvio e decisão de sala. O uso de Wokwi facilitou a repetição de cenários sem exigir uma placa a cada execução.
+
+O Marco 3 operou o broker HiveMQ local com TLS e contas individuais. Permissões por tópico limitaram produtor, consumidor e painel às respectivas operações. O consumidor calculava um resumo da sessão a partir da telemetria, e os testes verificavam entrega repetida e rejeições do canal. No Marco 4, o microfone do Android passou a enviar o áudio necessário para transcrição, e o produtor visual foi integrado à decisão. A API HTTPS substituiu o broker nessa versão. Permaneceram os princípios de identidade individual, confirmação, tratamento de atrasos e processamento local. A Figura~\ref{fig:evolucao} sintetiza o papel de cada etapa.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=5mm,
+  each/.style={component,text width=26mm,minimum height=22mm}]
+  \node[each] (m1) {\textbf{Marco 1}\\Cenário e contexto};
+  \node[each,right=of m1] (m2) {\textbf{Marco 2}\\ESP32, MQTT e ACK};
+  \node[each,right=of m2] (m3) {\textbf{Marco 3}\\TLS, ACL e resumo};
+  \node[each,right=of m3,draw=TowerTeal,fill=TowerIce] (m4) {\textbf{Marco 4}\\Android, visão e ata};
+  \draw[flow] (m1) -- (m2); \draw[flow] (m2) -- (m3); \draw[flow] (m3) -- (m4);
+\end{tikzpicture}
+\caption{Evolução das entregas, da modelagem do ambiente à captura e à ata persistida.}
+\label{fig:evolucao}
+\end{figure}
+
+\section{Fundamentação e trabalhos relacionados}
+
+\subsection{Contexto e presença}
+
+\cite{dey2001} define contexto como informação que caracteriza a situação de uma entidade relevante a uma interação. No TowerAI, a entidade principal é a sala. Há uma diferença operacional entre receber uma leitura válida de zero pessoas e perder a fonte visual. A primeira sinaliza uma sala aparentemente vazia. A segunda pede que o sistema marque a incerteza e possa continuar com o áudio, de acordo com a política da aplicação. A distinção também vale para o som: blocos silenciosos e ausência de blocos têm efeitos diferentes.
+
+O produtor visual usa o YOLOX-S, da família de detectores de objetos descrita por \cite{ge2021}, no modelo ONNX distribuído pelo OpenCV Zoo \cite{opencvzoo}. A inferência identifica caixas da classe pessoa e filtra sobreposições. O sinal é uma contagem aproximada de pessoas visíveis, limitada pelo enquadramento. A implementação atual observa o corpo e pode usar tronco e ombros como parte do enquadramento. Esse desenho dispensa coletar identidades para avaliar a abertura. A detecção facial usada na entrega anterior foi substituída pelo detector de pessoas.
+
+\subsection{Fala, texto e processamento na borda}
+
+Whisper é uma família de modelos de reconhecimento de fala treinados em larga escala com dados multilíngues \cite{radford2023}. O projeto usa Faster Whisper e CTranslate2 para executar a inferência \cite{fasterwhisper}. Os pesos habilitados para o servidor são Large v3 e Large v3 Turbo, e a transcrição é feita em português. Os segmentos preservam os intervalos no áudio recebido. Um segundo modelo transforma a transcrição em uma estrutura de resumo, decisões e ações. Os ensaios usam a família Qwen2.5 \cite{qwen2024}, servida pelo llama.cpp \cite{llamacpp}.
+
+O reconhecimento de fala fornece o texto que sustenta a ata. Separar as etapas permite reaproveitar uma transcrição se a geração falhar e facilita comparar o resultado com a fala captada. Um esquema JSON verifica a forma da resposta. Uma frase perfeitamente válida no esquema ainda pode atribuir uma ação à pessoa errada ou trocar seu prazo. O histórico preserva a transcrição junto da ata para a conferência por quem participou do encontro.
+
+O notebook concentra inferência e persistência. O tráfego do Android permanece na LAN, e o modelo de texto recebe a transcrição por loopback. Essa distribuição permite usar CPU ou GPU local para o reconhecimento de fala e limita o trabalho de captura, fila e visualização no telefone. SQLite oferece transações e separa o caminho de leitura do de escrita com o modo WAL \cite{sqlitewal}. TLS protege o transporte e permite verificar a identidade do serviço antes de entregar áudio ou credenciais \cite{rfc8446}.
+
+\section{Proposta e arquitetura}
+
+O sistema distingue captura, decisão, inferência e apresentação. O Android comunica a intenção de gravar, produz áudio e solicita o estado. O produtor visual observa a sala separadamente. A API Python valida o contrato e aplica a política em uma transação. Ao fechar uma reunião, um trabalhador assume sua entrada na fila de processamento. O Android solicita o resultado pela API. O painel Tkinter consulta o histórico local e prepara o PDF da reunião sob demanda. A Figura~\ref{fig:arquitetura} mostra essas responsabilidades e as fronteiras usadas no transporte.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[endpoint,text width=27mm] (cell) at (-5.6,1.6) {\textbf{Android}\\Microfone e histórico};
+  \node[component,text width=29mm] (camera) at (-0.55,-0.45) {\textbf{Webcam}\\\mbox{YOLOX-S}};
+  \node[component,text width=29mm] (api) at (-0.55,1.7) {\textbf{API HTTPS}\\Autorização e ACK};
+  \node[component,text width=31mm] (rule) at (3.75,1.7) {\textbf{Política da sala}\\Estado e fila};
+  \node[component,text width=31mm] (db) at (3.75,-0.45) {\textbf{SQLite / WAL}\\Reuniões e atas};
+  \node[stage,text width=31mm] (ai) at (3.75,3.5) {\textbf{Inferência local}\\Whisper e Qwen};
+  \node[endpoint,text width=29mm] (ui) at (-0.55,-2.2) {\textbf{Painel Tkinter}\\Exportação em PDF};
+  \draw[flow,<->] (cell) -- node[edge label,above] {LAN: HTTPS} (api);
+  \draw[flow] (camera) -- node[edge label,left=3pt] {HTTPS (CLI)} (api);
+  \draw[flow,dashed] (camera) -- node[edge label,above] {Painel} (db);
+  \draw[flow] (api) -- (rule);
+  \draw[flow,<->] (rule) -- (db);
+  \draw[flow,<->] (rule) -- (ai);
+  \draw[flow] (db.south) |- node[edge label,near end,above] {Leitura local} (ui.east);
+  \begin{scope}[on background layer]
+    \node[boundary,fit=(camera)(api)(rule)(db)(ai)(ui),inner xsep=7mm,inner ysep=5mm,
+      label={[font=\footnotesize\sffamily,text=TowerViolet]below:Notebook}] {};
+  \end{scope}
+\end{tikzpicture}
+\caption{Distribuição por dispositivo e fluxos do Marco 4. O painel integra a presença localmente. O produtor em linha de comando usa HTTPS.}
+\label{fig:arquitetura}
+\end{figure}
+
+\subsection{Distribuição e responsabilidades}
+
+O Android foi implementado em Kotlin e Jetpack Compose. A permissão de microfone é do sistema operacional e a captura é acionada pelo participante. O áudio é lido com \texttt{AudioRecord} \cite{audiorecord}. O aplicativo divide a coleta e a transmissão em tarefas concorrentes, conserva a ordem dos blocos e apresenta pendências e falhas de comunicação. Ao sair do primeiro plano, interrompe a coleta e tenta drenar os blocos ainda pendentes. O histórico indica o estado de processamento e permite abrir a transcrição e a ata.
+
+A webcam fica conectada ao notebook. O produtor em linha de comando envia contagem e horário pela API com sua própria credencial. No painel instalado, o controlador da webcam publica esses dados diretamente na camada de persistência, com uma identidade interna de presença da sala. O detector converte cada quadro para a entrada do modelo e aplica confiança mínima e supressão de caixas sobrepostas. A contagem publicada se estabiliza depois de três leituras compatíveis. Falha de leitura ou iluminação insuficiente pode produzir estimativa desconhecida. A imagem permanece em memória, inclusive na prévia do painel.
+
+O SQLite concentra a regra de sala, as transações e a fila. A política permite uma captura ativa por sala e identifica quem a abriu. Para evitar memorizar banco, fila e modelos em cada telefone, apenas o notebook calcula o estado e executa inferência. O modelo de texto roda em um processo local com interface de loopback. O painel permite gerenciar endereço, certificado, credenciais, webcam e modelos nos ambientes Windows e Ubuntu Desktop. A API tem o mesmo contrato nas duas plataformas.
+
+\section{Regra de contexto e contrato de eventos}
+
+A captura começa em \state{AGUARDANDO}. O servidor mede a energia RMS de cada bloco em dBFS. Três blocos frescos consecutivos com pelo menos $-42$ dBFS abrem a reunião se a presença recente for positiva ou desconhecida. Presença válida de zero mantém a espera. O dado visual vence depois de 15 segundos, e versões vencidas ou fora de ordem são ignoradas. Quando a reunião abre com presença desconhecida, o registro indica que a presença ficou sem verificação.
+
+A Figura~\ref{fig:estados} separa estados de captura dos estados de processamento. Um bloco abaixo do limiar leva a \state{ENCERRANDO}. Mais fala leva de volta a \state{ABERTA}. Dez blocos silenciosos consecutivos fecham a reunião. Após seis segundos sem áudio fresco, uma reunião aberta ou em encerramento passa a \state{SUSPENSA} e recebe marca de captura incompleta. Um bloco fresco retoma a avaliação. A interrupção prolongada fecha a reunião depois de outros 60 segundos. Parada manual e limite de 600 blocos persistidos também fecham a captura. A espera sem áudio fresco expira em 120 segundos, e uma captura que nunca abriu é descartada.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[component] (waiting) at (-5.1,1.1) {Aguardando};
+  \node[endpoint] (open) at (-0.8,1.1) {Aberta};
+  \node[component] (closing) at (3.9,1.1) {Encerrando};
+  \node[stage] (suspended) at (-0.8,-1.45) {Suspensa};
+  \node[component] (closed) at (3.9,-1.45) {Fechada};
+  \draw[flow] (waiting) -- node[edge label,above=3pt] {3 blocos e\\presença permite} (open);
+  \draw[flow] (open) to[bend left=15] node[edge label,above] {Bloco silencioso} (closing);
+  \draw[flow] (closing) to[bend left=15] node[edge label,below] {Bloco com energia} (open);
+  \draw[flow] (open.south west) to[bend right=24] node[edge label,left=3pt] {6 s sem\\áudio fresco} (suspended.north west);
+  \draw[flow] (suspended.north east) to[bend right=24] node[edge label,right=3pt] {Áudio fresco} (open.south east);
+  \draw[flow] (closing) -- node[edge label,right=3pt] {10 blocos\\silenciosos} (closed);
+  \draw[flow] (suspended) -- node[edge label,below=3pt] {Mais 60 s de falha} (closed);
+\end{tikzpicture}
+\caption{Principais transições de captura. Uma interrupção também pode suspender a captura a partir de Encerrando.}
+\label{fig:estados}
+\end{figure}
+
+\subsection{Formato, tempo e confirmação}
+
+Na API, o produtor visual envia JSON com identificador do evento, horário e uma contagem de 0 a 50 ou valor nulo. O microfone envia blocos de um segundo, cada qual com 32.000 bytes em PCM16 little-endian, mono e 16 kHz. O caminho da operação determina o identificador da captura e a sequência do bloco. O aplicativo calcula o horário de captura com a referência temporal do cabeçalho HTTPS \texttt{Date} e o relógio monotônico do Android. A referência preserva a idade real das amostras que aguardam reenvio, ainda que o relógio civil do celular esteja deslocado.
+
+Um bloco com horário mais de cinco segundos adiantado é rejeitado. O sistema considera atrasado um bloco com mais de seis segundos. Se já havia reunião, o bloco tardio pode compor o áudio histórico em ordem, com qualidade marcada como incompleta. Seu recebimento não retoma a avaliação ao vivo. Durante a espera, a sequência é confirmada e o conteúdo tardio é descartado. A política evita que uma rajada de áudio acumulado simule a volta de uma fonte ao vivo.
+
+Cada ACK segue a persistência do efeito no SQLite. Se a requisição é repetida com a mesma sequência e os mesmos bytes, o servidor confirma o bloco como duplicado. Um hash diferente para a mesma sequência ou um salto de sequência gera HTTP 409. A fila do Android limita a 120 blocos a quantidade de dados ainda pendentes em memória. A Tabela~\ref{tab:contrato} resume os caminhos mais usados. O contrato no repositório detalha validação, estados e códigos de confirmação.
+
+\begin{table}[htbp]
+\centering
+\caption{Operações principais da API HTTPS v1.}
+\label{tab:contrato}
+\small
+\begin{tabularx}{\linewidth}{@{}P{5.25cm}P{2.5cm}L@{}}
+\toprule
+\textbf{Operação} & \textbf{Papel} & \textbf{Efeito ou retorno} \\ \midrule
+\docpath{GET /v1/status} & Microfone ou presença & Identidade e estado autorizado. \\
+\docpath{POST /v1/presence} & Presença & Estimativa com validade e ACK. \\
+\docpath{PUT /v1/captures/{id}} & Microfone & Arma uma captura com título. \\
+\docpath{PUT /v1/captures/{id}/chunks/{seq}} & Microfone dono & Valida e confirma um bloco PCM. \\
+\docpath{PUT /v1/captures/{id}/finish} & Microfone dono & Solicita encerramento idempotente. \\
+\docpath{GET /v1/meetings} & Microfone & Lista as últimas 50 reuniões iniciadas da sala. \\
+\docpath{GET /v1/captures/{id}} & Microfone da sala & Retorna o detalhe de uma reunião. \\
+\docpath{PUT /v1/captures/{id}/retry} & Microfone dono & Recoloca um trabalho com falha na fila. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Implementação e implantação}
+
+\subsection{Processamento e recuperação}
+
+Uma reunião fechada com áudio passa ao estado de processamento \state{PENDENTE}. O trabalhador reivindica o trabalho em uma transação e monta um WAV temporário com os blocos aceitos. O Faster Whisper produz segmentos em português na CPU ou em GPU, conforme a execução. Ao confirmar a transcrição, o servidor salva os segmentos e conserva os blocos PCM e os hashes no SQLite. Em seguida, o modelo de texto recebe a transcrição e um esquema esperado de saída.
+
+A ata salva registra resumo, lista de decisões e ações. Cada ação guarda tarefa, responsável e prazo. O campo de conclusão inicia como falso. Responsáveis e prazos ausentes na fala podem ficar em branco. O servidor valida chaves, listas e tipos antes de registrar o resultado. Transcrição e ata são gravadas em transações distintas. Se a segunda etapa falha, o histórico conserva a primeira. O reprocessamento reutiliza a transcrição. Ao reiniciar o servidor, trabalhos interrompidos retornam à fila e as atas prontas seguem acessíveis.
+
+O armazenamento é organizado por sala e por identificador de captura. Inclui horário de início e fim, título, qualidade, resultado e motivo de encerramento. O mapeamento de horário preserva offsets relativos ao áudio recebido e concatenado. Quando houve falha de comunicação, os offsets não representam necessariamente um relógio contínuo da reunião original. A Figura~\ref{fig:processamento} distingue o momento das gravações persistentes e os caminhos de leitura.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[component,text width=27mm] (pcm) at (-4.9,0) {\textbf{Captura fechada}\\Áudio em PCM};
+  \node[component,text width=26mm] (stt) at (-1.6,0) {\textbf{Transcrição}\\Whisper local};
+  \node[component,text width=26mm] (llm) at (1.7,0) {\textbf{Geração}\\Qwen / llama.cpp};
+  \node[endpoint,text width=26mm] (ready) at (5,0) {\textbf{Ata pronta}\\SQLite};
+  \node[stage,text width=28mm] (segments) at (-1.6,-1.75) {Segmentos salvos};
+  \node[endpoint,text width=24mm] (history) at (3.25,-1.75) {Histórico Android};
+  \node[endpoint,text width=24mm] (pdf) at (5,-3.0) {PDF no notebook};
+  \draw[flow] (pcm) -- (stt); \draw[flow] (stt) -- (llm); \draw[flow] (llm) -- (ready);
+  \draw[flow] (stt) -- (segments);
+  \draw[flow,dashed] (segments.east) -| node[edge label,pos=.25,above] {Reuso no retry} (llm.south);
+  \draw[flow] (ready.south) |- (history.east);
+  \draw[flow] (ready.south) -- (pdf.north);
+\end{tikzpicture}
+\caption{Processamento depois do encerramento. A transcrição é persistida antes da ata para permitir geração repetida.}
+\label{fig:processamento}
+\end{figure}
+
+\subsection{Painel servidor e exportação}
+
+O painel configura a interface de rede, emite o certificado, provisiona o microfone, mostra a webcam e acompanha o processamento. Na versão 4.1.3, a aba \emph{Histórico} lista reuniões encerradas com título, horário, sala, status e qualidade da captura. O PDF reproduz os dados do histórico Android, incluindo avisos, ata, decisões, ações e a transcrição com seus tempos. Quando o áudio está disponível, o painel reúne os blocos originais em um WAV sem compressão e o incorpora como anexo do PDF.
+
+A consulta do painel usa o SQLite local em modo somente leitura. A exportação funciona com a API e os modelos desligados. As reuniões antigas fornecem os dados ainda presentes no SQLite, mesmo quando seus blocos de áudio já foram descartados. O programa monta o documento em um arquivo temporário no diretório de destino e substitui o destino quando o PDF está completo. A exportação usa o acesso da conta que opera o painel.
+
+\subsection{Instalação e roteiro de uso}
+
+O servidor tem instaladores para Windows x64 e Ubuntu Desktop amd64. Os pacotes incluem o painel, o runtime e o modelo de presença. Os pesos padrão de fala e texto podem ser baixados pelo painel ou escolhidos em disco. A distribuição usa Whisper Large v3 Turbo e Qwen2.5 1.5B Instruct quantizado como configuração padrão em CPU. O ensaio comparativo da Seção~\ref{sec:resultados} inclui uma configuração de texto maior e GPU para a fala. Uma vez preparados os pesos, o fluxo principal pode operar sem internet, desde que os dispositivos compartilhem uma LAN funcional.
+
+O operador escolhe a interface IPv4, gera o certificado, provisiona um microfone da sala e transfere a CA e a credencial. Com o servidor em funcionamento, o participante importa a CA no Android, informa a origem HTTPS, conecta e arma o microfone com um título. Com a webcam selecionada, sala vazia válida mantém o estado de espera e a chegada de uma pessoa permite a abertura após atividade sonora sustentada. Ao parar pelo Android ou aguardar o silêncio, o participante acompanha o processamento e abre o histórico. O operador pode então exportar o histórico da reunião a partir do notebook.
+
+Os guias de implantação separam a instalação empacotada da execução por código-fonte e registram os pré-requisitos, a ordem de execução, o armazenamento e as portas. A pasta de dados do usuário permanece entre atualizações. A preparação pela linha de comando cria um ambiente virtual Python, baixa o modelo de visão e configura certificados e credenciais de teste. O código Android usa Gradle e Android SDK, e o APK de demonstração já pode ser instalado diretamente.
+
+\section{Segurança e privacidade}
+
+\subsection{Identidade do serviço e canal}
+
+O servidor aceita TLS 1.2 ou superior. Uma autoridade certificadora local assina o certificado que contém os endereços esperados no campo SAN. No primeiro uso, o operador transfere o certificado público da CA para o Android por um canal de confiança. O cliente valida cadeia e validade, além do nome ou IP usado na conexão. Um IP alterado exige que a instalação revise a origem e, quando necessário, o certificado e a CA importada. O endpoint da API fica na LAN em HTTPS. O serviço do modelo de texto fica acessível apenas por loopback.
+
+\subsection{Identidade do produtor e autorização}
+
+O painel ou a ferramenta de linha de comando provisiona tokens do tipo Bearer para os produtores. A API associa o hash da credencial a um identificador, um papel e uma sala. O produtor visual pode publicar presença e consultar seu próprio status. O microfone consulta o histórico da sala e solicita uma captura. Somente quem criou a captura pode enviar seus blocos, pará-la ou pedir reprocessamento. No painel, provisionar ou revogar atualiza o cadastro e, com o servidor ativo, sua cópia em memória. Arquivos de chaves e credenciais ficam fora do Git. A administração ocorre no notebook.
+
+\subsection{Limites do modelo de confiança}
+
+Quem tem acesso à conta que opera o notebook pode ler o SQLite e os PDFs exportados. O servidor termina o TLS e usa áudio e texto em claro durante o processamento. A aplicação confia no software do produtor autenticado e no operador local. Credenciais Bearer comprovam posse do segredo provisionado. A estimativa visual descreve pessoas visíveis e dispensa identificação pessoal. O áudio persistido pode ocupar até 19,2 MB por reunião e passa a integrar o mesmo regime de acesso do banco e dos backups.
+
+Voz, enquadramento e texto podem envolver dados pessoais. No cenário de uso, o operador deve comunicar a finalidade antes de ligar os sensores. Para as evidências deste trabalho, o ensaio de referência usou fala sintética e nomes fictícios. O resultado exportado merece o mesmo cuidado do histórico. O PDF fica no local escolhido e pode ser copiado como qualquer documento.
+
+\section{Metodologia de avaliação}
+
+Foram combinados testes de unidade e integração, instrumentação Android e ensaios com modelos reais. Os testes de API iniciam um servidor HTTPS em loopback com CA, credenciais e banco temporários. PCM conhecido e relógio controlado permitem reproduzir limiares e falhas sem depender de uma reunião física. Adaptadores de inferência em teste devolvem resultados previsíveis. Assim, é possível distinguir falhas de contrato, persistência e autorização de diferenças de interpretação do modelo.
+
+\subsection{Contexto, segurança e recuperação}
+
+Para verificar mudança de contexto, o teste injeta presença zero, entrega a sequência de áudio acima do limiar e espera que a captura permaneça armada. Depois injeta contagem positiva e repete a atividade sonora. A expectativa é abrir a reunião e encerrá-la após o silêncio. Outro teste faz a presença vencer e confirma a distinção entre zero e desconhecido. Uma interrupção simulada avança o relógio além da janela de áudio. Depois, o cliente repete um bloco confirmado, entrega um bloco tardio e, por fim, um bloco fresco para verificar o retorno.
+
+Para testar a fronteira de acesso, o servidor recebe uma chamada autorizada e chamadas com credencial inválida, papel insuficiente ou recurso de outra sala. Em paralelo, o cliente tenta TLS com a CA correta, uma CA desconhecida e um endereço ausente do SAN. Para persistência, o mesmo SQLite é reaberto em outra instância e são comparadas ata e transcrição. Uma falha injetada no gerador de texto verifica se um novo processamento pode reutilizar a transcrição.
+
+\subsection{Android e exportação local}
+
+O build e a assinatura produzem um APK de instalação direta. Testes JVM verificam origem, credenciais e a referência temporal do envio. A instrumentação no Android 15 emulado cobre a exigência de CA, conexão, envio confirmado e parada. Para a verificação de consulta, o banco de teste recebe uma cópia da ata do ensaio real. A tela deve recuperar o mesmo conteúdo pelo histórico.
+
+A avaliação verifica o caso de instalação sem banco e a exportação de reuniões processadas e com falha. Um teste com acentos, caracteres de marcação e várias ações verifica a paginação e os trechos da transcrição. Um segundo teste processa uma captura, reabre o banco e compara os bytes PCM extraídos do WAV anexo com os blocos enviados. Uma reunião antiga com transcrição deve permanecer exportável mesmo sem áudio.
+
+\subsection{Inferência real e reprodução}
+
+Os ensaios usam o mesmo WAV sintético em português, com 17 segundos de áudio, uma decisão e duas ações. Clientes autenticados enviam o PCM e a presença injetada pela API. A fala passa pelo Whisper em CUDA no Windows com uma RTX 5060 Ti. A geração usa Qwen2.5 em CPU. Mede-se o tempo do fluxo exercitado, incluindo a entrega, o processamento, o reinício do serviço e a confirmação do histórico. A métrica representa uma execução completa nesse arranjo.
+
+O guia de verificação documenta os comandos da suíte Python e as tarefas Gradle de compilação e teste no Android, incluindo a instrumentação. O script \docpath{ensaio.py} reproduz o ensaio com os modelos locais. Os tempos e o resultado de cada configuração estão nos arquivos JSON de \docpath{marco-4/docs/evidencias}.
+
+\section{Resultados e discussão}
+\label{sec:resultados}
+
+\subsection{Fluxo e garantias verificadas}
+
+Os 16 testes Python do servidor 4.1.3 passaram. Os testes observaram bloqueio de abertura diante de presença válida zero, abertura após nova leitura positiva e encerramento pelo silêncio. A interrupção levou a uma captura suspensa e incompleta. Um reenvio idêntico foi confirmado como duplicado. Um bloco atrasado preservou histórico sem reativar a decisão, e um bloco fresco retomou o fluxo. Foram verificadas a rejeição de CA e endereço inválidos, a recusa por credenciais e permissões, e a recuperação da ata após reinício.
+
+No Android 4.0.1, passaram três testes JVM e dois instrumentados. O registro do emulador mostra importação de CA, confirmação de áudio, parada e consulta a uma ata persistida. Uma regressão controlada alterou em 120 segundos o relógio da API. O cliente anterior enviou 15 blocos sem produzir medida de um bloco fresco. O cliente corrigido recebeu a medição em dBFS e confirmou a parada. O resultado sustenta a escolha de usar a referência do servidor e o tempo monotônico para preservar a idade dos blocos.
+
+\begin{table}[H]
+\centering
+\caption{Resultados observados por requisito e origem da evidência.}
+\label{tab:resultados}
+\small
+\begin{tabularx}{\linewidth}{@{}P{2.85cm}L P{3.55cm}@{}}
+\toprule
+\textbf{Requisito} & \textbf{Observação} & \textbf{Evidência} \\ \midrule
+Dois produtores e contexto & Presença zero bloqueou a abertura e presença positiva a permitiu. & Testes de API com eventos injetados. \\
+Falha e recuperação & A captura marcou a lacuna, arquivou o bloco tardio e retomou com áudio fresco. & Testes com tempo controlado. \\
+Persistência & ID, transcrição e ata foram recuperados após reinício. & Testes de API e ensaios de inferência. \\
+Canal e autorização & Identidades inválidas e operações fora do papel ou da sala foram recusadas. & Testes HTTPS e contrato v1. \\
+Aplicativo instalável & O Android confirmou blocos e consultou o histórico no emulador. & Build, assinatura e testes Android. \\
+Exportação local & O PDF conservou a transcrição e o WAV restaurou os blocos PCM recebidos. & Verificação de regressão do servidor 4.1.3. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Comparação das configurações de inferência}
+
+As três configurações transcreveram quatro segmentos e recuperaram a ata após reinício. O conteúdo esperado era a publicação do manual na sexta-feira, a revisão por Ana até quinta-feira e o teste do aplicativo por Bruno até quarta-feira. As configurações com Qwen2.5 7B preservaram a decisão como futura e atribuíram corretamente as duas ações. Com Qwen2.5 1.5B, os responsáveis e prazos apareceram corretamente, mas o texto apresentou a publicação como concluída. A diferença apareceu em conteúdo que passou pela validação estrutural.
+
+\begin{table}[H]
+\centering
+\caption{Tempo do fluxo para um WAV sintético de 17 segundos.}
+\label{tab:tempos}
+\small
+\begin{tabularx}{\linewidth}{@{}P{3.1cm}P{2.2cm}rL@{}}
+\toprule
+\textbf{Whisper (CUDA)} & \textbf{Qwen (CPU)} & \textbf{Fluxo (s)} & \textbf{Fidelidade do resultado} \\ \midrule
+Large v3 Turbo & 7B & 29,86 & Decisão futura e duas ações corretas. \\
+Large v3 & 7B & 47,88 & Mesma decisão e mesmas atribuições. \\
+Large v3 Turbo & 1.5B & 16,32 & Duas ações corretas. Decisão descrita como concluída. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+A Tabela~\ref{tab:tempos} permite duas comparações com uma variável de cada vez nesse ensaio. Mantendo o modelo de texto 7B, Turbo concluiu o fluxo antes da variante Large v3. Mantendo Turbo, o modelo de texto 1.5B concluiu antes do 7B e alterou o sentido temporal da decisão. O pacote de instalação privilegia um modelo de texto que exige menos recursos para iniciar em CPU. A configuração de 7B tem evidência qualitativa melhor neste roteiro curto. O tempo total também inclui partes que são externas à inferência e, portanto, não isola a latência de cada modelo.
+
+\subsection{Validade dos resultados e limitações}
+
+A combinação de sinais foi confirmada pelo teste da regra de decisão. A avaliação usou contagens injetadas nos cenários controlados, o que deixa a precisão da webcam em salas reais em aberto. Distância, baixa luz, oclusão e enquadramento podem mudar o resultado de presença. RMS mede energia e pode reagir a ruído ou reprodução de mídia. Uma avaliação de campo deve variar esses fatores e separar erros de visão, áudio e conexão de um erro na política.
+
+A fala sintética facilita reproduzir as frases e conferir responsáveis. Ela não representa sobreposição de vozes, sotaques, eco ou o ruído de uma conversa espontânea. Também não se mediram consumo de bateria e latência sob carga ou em reuniões longas de forma representativa. O áudio persistido tem limite de dez minutos por reunião. A fila no telefone é volátil, portanto encerrar o processo antes dos ACKs pode perder dados. A marca de captura incompleta registra falhas identificadas no caminho de entrega e deve acompanhar a interpretação da ata.
+
+\section{Conclusão}
+
+O TowerAI integrou o microfone do Android e a estimativa de presença de uma webcam a um fluxo local de reunião. A combinação de contexto, transações e confirmações permitiu testar abertura, fechamento e recuperação de interrupções. O notebook executa a transcrição, gera a ata e permite consultar o registro depois de reiniciar. O aplicativo acompanha a captura e oferece histórico, enquanto o painel exporta os detalhes da reunião e o áudio persistido.
+
+Os ensaios mostraram que é possível executar ambos os modelos no ambiente local e recuperar o resultado em um novo processo. A comparação também mostrou que validar JSON preserva a estrutura, mas a conferência com a transcrição continua necessária. Ensaios com sensores físicos, fala espontânea e redes instáveis podem medir erros, tempos por etapa e consumo de energia.
+
+\paragraph{Transparência.}
+O Codex auxiliou na implementação, nos testes, na redação e na diagramação. A revisão reaproveitou o contrato existente, confrontou as descrições com o código e usou os registros dos ensaios para conferir as alegações. O documento de entrega no repositório reúne o roteiro e os campos de contribuições individuais e de atendimento ao feedback. O preenchimento depende dos relatos do grupo e do feedback recebido.
+
+\clearpage
+\bibliographystyle{sbc}
+\bibliography{towerai}
+\end{document}

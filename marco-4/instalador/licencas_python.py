@@ -14,7 +14,10 @@ def collect(output):
                          (python / "tcl/tk8.6/license.terms", "Tcl-Tk-LICENSE.txt")):
         if source.is_file():
             shutil.copyfile(source, output / name)
-    pending = ["faster-whisper", "ctranslate2", "opencv-python-headless", "cryptography", "cv2-enumerate-cameras"]
+    pending = [
+        "faster-whisper", "ctranslate2", "opencv-python-headless", "cryptography",
+        "cv2-enumerate-cameras", "reportlab", "pypdf",
+    ]
     copied = set()
     while pending:
         package = distribution(pending.pop())
@@ -23,7 +26,8 @@ def collect(output):
             continue
         copied.add(name)
         for entry in package.files or ():
-            if ".." not in entry.parts and entry.name.upper().startswith(("LICENSE", "NOTICE", "COPYING")):
+            if ".." not in entry.parts and (entry.name.upper().startswith(("LICENSE", "NOTICE", "COPYING"))
+                                             or entry.name.lower() == "bitstream-vera-license.txt"):
                 destination = output / name / Path(*entry.parts)
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(package.locate_file(entry), destination)

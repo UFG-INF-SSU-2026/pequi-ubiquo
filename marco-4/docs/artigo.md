@@ -1,5 +1,7 @@
 # TowerAI
 
+> Fonte histórica da primeira entrega. A [versão atual em LaTeX](templates%20latex/template_artigo/towerai.tex) documenta o YOLOX-S e a exportação de atas.
+
 ## Registro de reuniões com contexto e processamento local
 
 Thiago Nascente · Samuel Machado · Moisés Protázio · Vinícius Benevides

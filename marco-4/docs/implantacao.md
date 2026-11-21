@@ -130,7 +130,7 @@ O APK compilado fica em `app/build/outputs/apk/debug/app-debug.apk`. O segundo c
 
 ## Dados e limites
 
-O SQLite fica em `servidor/local/towerai.sqlite3`. Preserve essa pasta entre execuções. A API armazena horários, áudio pendente, transcrição e ata. Os blocos brutos são removidos logicamente após a transcrição. Páginas do banco, WAL e backups podem reter dados, portanto restrinja o acesso ao diretório. A webcam processa quadros em memória e publica a estimativa, sem identificar pessoas.
+O SQLite fica em `servidor/local/towerai.sqlite3`. Preserve essa pasta entre execuções. O servidor armazena horários, áudio, transcrição e ata. Desde a versão 4.1.3, os blocos PCM persistidos de uma reunião são preservados após a transcrição para exportação em WAV pelo painel. O limite de dez minutos corresponde a até 19,2 MB de PCM por reunião. Restrinja o acesso ao banco, ao WAL e aos backups. A webcam processa quadros em memória e publica a estimativa, sem identificar pessoas.
 
 Execute uma única instância da API por diretório local. Um servidor novo usa o banco existente e recoloca processamentos interrompidos na fila.
 

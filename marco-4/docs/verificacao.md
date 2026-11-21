@@ -23,9 +23,13 @@ Rode a suíte Python após preparar o ambiente do [guia de implantação](implan
 | Falha e recuperação | Avançar o relógio com envio interrompido, reenviar bloco confirmado e enviar bloco atrasado e depois fresco. | Suspende, confirma o duplicado, arquiva o atrasado sem alterar contexto e retoma com áudio fresco. |
 | Falha na IA de texto | Fazer o gerador falhar após concluir a transcrição e repetir o processamento. | Mantém os segmentos e reprocessa somente a ata. |
 | Restrições de modelo | Validar esquema de ata, lista de modelos de fala e destino do modelo de texto. | Somente as duas variantes Large configuradas. Campos inválidos e destino externo recusados. |
+| Exportação do histórico | Consultar um diretório sem banco, abrir reuniões encerradas de uma versão anterior e exportar atas com várias ações e transcrição marcada por tempo. | O diretório vazio continua intacto. O PDF é paginado, inclui o status do processamento e preserva o conteúdo disponível sem alterar o banco. |
+| Gravação anexada ao PDF | Processar três blocos PCM, reabrir o SQLite, exportar a reunião e extrair o WAV do PDF. | O anexo tem áudio mono PCM16 a 16 kHz. Os dados extraídos são idênticos aos três blocos originais, na ordem de captura. |
 | Android | Build, assinatura e instalação em Android 15 emulado. Conectar ao servidor de teste, captar, parar e consultar uma ata existente. | APK instalável. A tela exige CA. O app recebeu ACK para os blocos, parou a captura e exibiu ata e transcrição no histórico. |
 
-O [log do servidor](evidencias/testes-servidor.txt) registra **10 testes aprovados**. No Android 4.0.1, passaram **3 testes JVM e 2 instrumentados**. Consulte o [registro da execução Android](evidencias/android.txt) para a versão, a assinatura e o resultado.
+O [log do servidor 4.1.3](evidencias/testes-servidor-4.1.3.txt) registra **16 testes aprovados**, incluindo as regressões do histórico e do WAV. No Android 4.0.1, passaram **3 testes JVM e 2 instrumentados**. Consulte o [registro da execução Android](evidencias/android.txt) para a versão, a assinatura e o resultado.
+
+Com o pacote 4.1.3-1 instalado no Ubuntu 24.04 amd64 e a API parada, a exportação pela aba **Histórico** salvou o PDF com a transcrição e o WAV. A comparação confirmou 48.000 amostras PCM idênticas às do banco de teste. No Windows, o executável empacotado 4.1.3 iniciou com um diretório de dados isolado.
 
 O ensaio de regressão da versão 4.0.1 adiantou o relógio de uma API isolada em 120 segundos. O APK anterior enviou 15 blocos sem que a API registrasse o nível sonoro de um bloco fresco. Com o APK atualizado, a mesma verificação recebeu a medida de dBFS e confirmou a parada da captura. Um teste JVM verifica que o cálculo usa o horário do servidor e mantém a idade real de blocos pendentes.
 

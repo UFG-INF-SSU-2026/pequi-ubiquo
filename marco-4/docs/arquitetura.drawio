@@ -28,13 +28,18 @@
         <mxCell id="llm" value="Modelo de texto local&lt;br&gt;API em loopback" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0EAFB;strokeColor=#5E4B88;fontSize=15;" vertex="1" parent="1">
           <mxGeometry x="1160" y="420" width="230" height="85" as="geometry"/>
         </mxCell>
+        <mxCell id="desktop" value="Painel Tkinter&lt;br&gt;Histórico e PDF com WAV anexo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAF0E9;strokeColor=#2D6B5A;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="778" y="105" width="240" height="86" as="geometry"/>
+        </mxCell>
         <mxCell id="audio" value="HTTPS · áudio e consulta" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.28;entryX=0;entryY=0.22;endArrow=block;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="android" target="api"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="response" value="HTTPS · estado, transcrição e ata" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.48;entryX=1;entryY=0.72;endArrow=block;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="api" target="android"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="presence" value="HTTPS · contagem e validade" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.8;endArrow=block;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="camera" target="api"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="presence" value="CLI · HTTPS" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.38;entryX=0;entryY=0.8;endArrow=block;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="camera" target="api"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="local_presence" value="Painel · publicação local" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.77;entryX=0.35;entryY=1;endArrow=block;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="camera" target="decision"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="api_decision" style="endArrow=block;html=1;" edge="1" parent="1" source="api" target="decision"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="persistence" value="transações" style="edgeStyle=orthogonalEdgeStyle;html=1;startArrow=block;endArrow=block;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="decision" target="db"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="stt" value="WAV / segmentos" style="edgeStyle=orthogonalEdgeStyle;html=1;startArrow=block;endArrow=block;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="decision" target="whisper"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="minutes" value="texto / ata JSON" style="edgeStyle=orthogonalEdgeStyle;html=1;startArrow=block;endArrow=block;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="decision" target="llm"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="export" value="Somente leitura" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="db" target="desktop"><mxGeometry relative="1" as="geometry"/></mxCell>
       </root>
     </mxGraphModel>
   </diagram>

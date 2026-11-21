@@ -4,10 +4,10 @@ O pacote `.deb` é para Ubuntu 24.04 e 26.04 Desktop em PCs x86-64 (amd64). Ele 
 
 ## Instalar
 
-Na pasta que contém o arquivo `towerai-servidor_4.1.1-1_amd64.deb`, rode:
+Na pasta que contém o arquivo `towerai-servidor_4.1.3-1_amd64.deb`, rode:
 
 ```bash
-sudo apt install ./towerai-servidor_4.1.1-1_amd64.deb
+sudo apt install ./towerai-servidor_4.1.3-1_amd64.deb
 ```
 
 Abra **TowerAI Servidor** no menu de aplicativos ou execute `towerai-servidor` em um terminal da sessão gráfica, com seu usuário normal. Para começar a baixar os pesos ao abrir o painel, execute `towerai-servidor --preparar-modelos`.
@@ -27,6 +27,12 @@ sudo ufw allow in on enp3s0 proto tcp from 192.168.1.0/24 to 192.168.1.20 port 8
 ```
 
 Se o IP mudar, gere o certificado para a interface selecionada e importe a nova CA no celular. O histórico, os certificados, os registros e os modelos baixados ficam em `${XDG_DATA_HOME:-$HOME/.local/share}/towerai-servidor`. O botão **Abrir pasta de dados** abre esse diretório. Atualizações e remoções pelo `apt` preservam os dados do usuário.
+
+## Exportar o histórico da reunião em PDF
+
+Abra **Histórico**, selecione uma reunião encerrada e clique em **Exportar PDF…**. O documento reúne dados e avisos da captura, a ata, as decisões, as ações e a transcrição com marcações de tempo. A exportação funciona com o servidor parado. Use **Atualizar lista** para obter o estado mais recente do processamento.
+
+Desde a versão 4.1.3, o servidor preserva a gravação das reuniões no banco local. Quando disponível, ela acompanha o PDF no anexo `audio-da-reuniao.wav`. Abra o painel de anexos de um leitor de PDF que ofereça esse recurso. As reuniões que já tiveram o áudio descartado pelas versões anteriores continuam exportáveis com os dados disponíveis.
 
 ## Compilar
 

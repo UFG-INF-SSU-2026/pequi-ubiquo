@@ -16,6 +16,8 @@ from tkinter import filedialog, messagebox, ttk
 
 from main import PORT, devices_file
 from desktop_runtime import DATA_DIR, CameraReading, Configuration, DesktopServer, camera_devices, download_models, validate_name
+from meeting_pdf import meeting_date, save_meeting_pdf
+from towerai import Database
 
 
 WINDOWS = sys.platform == "win32"
@@ -75,6 +77,9 @@ def styles(root):
     style.map("TNotebook.Tab", background=[("selected", SURFACE), ("active", "#EAE4F3")],
               foreground=[("selected", ACCENT)])
     style.configure("TSeparator", background=LINE)
+    style.configure("History.Treeview", background=SURFACE, fieldbackground=SURFACE, foreground=INK, rowheight=30)
+    style.configure("History.Treeview.Heading", background=BACKGROUND, foreground=INK, padding=(6, 6))
+    style.map("History.Treeview", background=[("selected", "#E7DFF3")], foreground=[("selected", INK)])
 
 
 class App:
@@ -95,6 +100,8 @@ class App:
         self.preview_data = None
         self.photo = None
         self.buttons = []
+        self.history_dirty = True
+        self.history_rows = {}
         root.title("TowerAI Servidor")
         root.geometry("1040x715")
         root.minsize(940, 680)
@@ -121,10 +128,13 @@ class App:
         self.network_tab = self.tab("Rede e microfone")
         self.camera_tab = self.tab("Webcam")
         self.models_tab = self.tab("Modelos")
+        self.history_tab = self.tab("Histórico")
         self.build_monitor()
         self.build_network()
         self.build_camera()
         self.build_models()
+        self.build_history()
+        self.tabs.bind("<<NotebookTabChanged>>", self.history_tab_changed)
 
         footer = ttk.Frame(content)
         footer.pack(fill="x", pady=(10, 0))
@@ -280,6 +290,99 @@ class App:
     def set_notice(self, text, error=False):
         self.notice.configure(text=text, fg=RED if error else MUTED)
 
+    def build_history(self):
+        panel = self.history_tab
+        self.line(panel, "Histórico de reuniões", style="Heading.TLabel")
+        self.line(panel, "Selecione uma reunião encerrada para exportar o histórico em PDF, com a gravação WAV quando disponível.")
+        table = ttk.Frame(panel, style="Panel.TFrame")
+        table.pack(fill="both", expand=True, pady=(8, 10))
+        columns = ("title", "date", "room", "processing", "quality")
+        self.history_tree = ttk.Treeview(table, columns=columns, show="headings", selectmode="browse",
+                                         style="History.Treeview")
+        for key, label, width in zip(
+            columns, ("Reunião", "Início", "Sala", "Status", "Captura"), (275, 145, 100, 175, 105)
+        ):
+            self.history_tree.heading(key, text=label, anchor="w")
+            self.history_tree.column(key, width=width, minwidth=85, stretch=key in {"title", "room"})
+        scroll = ttk.Scrollbar(table, command=self.history_tree.yview)
+        scroll.pack(side="right", fill="y")
+        self.history_tree.configure(yscrollcommand=scroll.set)
+        self.history_tree.pack(side="left", fill="both", expand=True)
+        self.history_tree.bind("<<TreeviewSelect>>", lambda event: self.history_controls())
+        self.history_tree.bind("<Double-1>", self.history_double_click)
+        self.history_tree.bind("<Return>", lambda event: self.export_history())
+
+        actions = ttk.Frame(panel, style="Panel.TFrame")
+        actions.pack(fill="x")
+        self.history_status = ttk.Label(actions, text="Carregando histórico…", style="Muted.TLabel")
+        self.history_status.pack(side="left")
+        self.history_export_button = self.button(actions, "Exportar PDF…", self.export_history, accent=True)
+        self.history_export_button.pack(side="right")
+        self.button(actions, "Atualizar lista", self.refresh_history).pack(side="right", padx=(0, 8))
+
+    def history_tab_changed(self, event):
+        if self.tabs.select() == str(self.history_tab):
+            self.history_dirty = True
+
+    def history_controls(self):
+        enabled = bool(self.history_tree.selection()) and not self.busy
+        self.history_export_button.state(["!disabled"] if enabled else ["disabled"])
+
+    def refresh_history(self):
+        if self.busy:
+            return
+        self.history_dirty = False
+
+        def show(rows):
+            selection = self.history_tree.selection()
+            self.history_tree.delete(*self.history_tree.get_children())
+            self.history_rows = {row["id"]: row for row in rows}
+            for row in rows:
+                date = meeting_date(row["started_at"]).strftime("%d/%m/%Y %H:%M")
+                quality = "Incompleta" if row["gap"] else "Completa"
+                status = LABELS_JOB.get(row["processing"], "Encerrada")
+                self.history_tree.insert("", "end", iid=row["id"], values=(row["title"], date, row["room"], status, quality))
+            if selection and selection[0] in self.history_rows:
+                self.history_tree.selection_set(selection[0])
+                self.history_tree.see(selection[0])
+            message = f"Reuniões encerradas: {len(rows)}" if rows else "Nenhuma reunião encerrada. Atualize a lista após encerrar uma captura."
+            self.history_status.configure(text=message)
+            self.history_controls()
+
+        def read():
+            try:
+                return Database.exportable_meetings(self.config.database)
+            except Exception:
+                LOG.exception("Falha ao consultar o histórico de reuniões")
+                return None
+
+        def loaded(rows):
+            if rows is None:
+                self.history_status.configure(text="Falha ao ler o histórico. Atualize a lista para tentar novamente.")
+            else:
+                show(rows)
+
+        self.history_status.configure(text="Carregando histórico…")
+        self.run_task("Consultando o histórico de reuniões…", read, done=loaded)
+
+    def history_double_click(self, event):
+        if self.history_tree.identify_row(event.y) in self.history_tree.selection():
+            self.export_history()
+
+    def export_history(self):
+        selection = self.history_tree.selection()
+        if self.busy or not selection:
+            return
+        meeting = self.history_rows[selection[0]]
+        started = meeting_date(meeting["started_at"])
+        destination = filedialog.asksaveasfilename(
+            parent=self.root, title="Exportar histórico da reunião", defaultextension=".pdf",
+            initialfile=f"reuniao-{started:%Y%m%d-%H%M}-{meeting['id'][:8]}.pdf", filetypes=[("Documento PDF", "*.pdf")],
+        )
+        if destination:
+            self.run_task("Gerando PDF da reunião…", lambda: save_meeting_pdf(self.config.database, meeting["id"], destination),
+                          success=f"PDF salvo em {destination}")
+
     def open_data_folder(self):
         try:
             if WINDOWS:
@@ -333,6 +436,7 @@ class App:
     def controls(self):
         for button in self.buttons:
             button.state(["disabled"] if self.busy else ["!disabled"])
+        self.history_controls()
         self.network_choice.configure(state="disabled" if self.busy or self.server.running else "readonly")
         self.camera_choice.configure(state="disabled" if self.busy else "readonly")
         self.cancel_download_button.state(["!disabled"] if self.model_process is not None else ["disabled"])
@@ -701,6 +805,8 @@ class App:
     def tick(self):
         if not self.finish_tasks():
             return
+        if self.history_dirty and not self.busy and self.tabs.select() == str(self.history_tab):
+            self.refresh_history()
         self.poll_model_download()
         running = self.server.running
         self.power_label.configure(text="Em execução" if running else "Parado", fg=GREEN if running else MUTED)
