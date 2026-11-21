@@ -192,7 +192,7 @@ Cada ACK segue a persistência do efeito no SQLite. Se a requisição é repetid
 
 Uma reunião fechada com áudio passa ao estado de processamento \state{PENDENTE}. O trabalhador reivindica o trabalho em uma transação e monta um WAV temporário com os blocos aceitos. O Faster Whisper produz segmentos em português na CPU ou em GPU, conforme a execução. Ao confirmar a transcrição, o servidor salva os segmentos e conserva os blocos PCM e os hashes no SQLite. Em seguida, o modelo de texto recebe a transcrição e um esquema esperado de saída.
 
-A ata salva registra resumo, lista de decisões e ações. Cada ação guarda tarefa, responsável e prazo. O campo de conclusão inicia como falso. Responsáveis e prazos ausentes na fala podem ficar em branco. O servidor valida chaves, listas e tipos antes de registrar o resultado. Transcrição e ata são gravadas em transações distintas. Se a segunda etapa falha, o histórico conserva a primeira. O reprocessamento reutiliza a transcrição. Ao reiniciar o servidor, trabalhos interrompidos retornam à fila e as atas prontas seguem acessíveis.
+A ata salva registra resumo, lista de decisões e ações. Cada ação guarda tarefa, responsável e prazo. O campo de conclusão inicia como falso. Responsáveis e prazos ausentes na fala podem ficar em branco. O servidor valida chaves, listas e tipos. A partir da versão 4.1.4, respostas identificadas em inglês recebem uma nova tentativa em português. Transcrição e ata são gravadas em transações distintas. Se a segunda etapa falha, o histórico conserva a primeira. O reprocessamento reutiliza a transcrição. Ao reiniciar o servidor, trabalhos interrompidos retornam à fila e as atas prontas seguem acessíveis.
 
 O armazenamento é organizado por sala e por identificador de captura. Inclui horário de início e fim, título, qualidade, resultado e motivo de encerramento. O mapeamento de horário preserva offsets relativos ao áudio recebido e concatenado. Quando houve falha de comunicação, os offsets não representam necessariamente um relógio contínuo da reunião original. A Figura~\ref{fig:processamento} distingue o momento das gravações persistentes e os caminhos de leitura.
 
@@ -218,7 +218,7 @@ O armazenamento é organizado por sala e por identificador de captura. Inclui ho
 
 \subsection{Painel servidor e exportação}
 
-O painel configura a interface de rede, emite o certificado, provisiona o microfone, mostra a webcam e acompanha o processamento. Na versão 4.1.3, a aba \emph{Histórico} lista reuniões encerradas com título, horário, sala, status e qualidade da captura. O PDF reproduz os dados do histórico Android, incluindo avisos, ata, decisões, ações e a transcrição com seus tempos. Quando o áudio está disponível, o painel reúne os blocos originais em um WAV sem compressão e o incorpora como anexo do PDF.
+O painel configura a interface de rede, emite o certificado, provisiona o microfone, mostra a webcam e acompanha o processamento. A aba \emph{Histórico} lista reuniões encerradas e permite gerar a ata novamente com a transcrição salva. O PDF reproduz os dados do histórico Android, incluindo avisos, ata, decisões, ações e a transcrição com seus tempos. Quando o áudio está disponível, o painel reúne os blocos originais em um WAV sem compressão e o incorpora como anexo do PDF.
 
 A consulta do painel usa o SQLite local em modo somente leitura. A exportação funciona com a API e os modelos desligados. As reuniões antigas fornecem os dados ainda presentes no SQLite, mesmo quando seus blocos de áudio já foram descartados. O programa monta o documento em um arquivo temporário no diretório de destino e substitui o destino quando o PDF está completo. A exportação usa o acesso da conta que opera o painel.
 
@@ -273,7 +273,7 @@ O guia de verificação documenta os comandos da suíte Python e as tarefas Grad
 
 \subsection{Fluxo e garantias verificadas}
 
-Os 16 testes Python do servidor 4.1.3 passaram. Os testes observaram bloqueio de abertura diante de presença válida zero, abertura após nova leitura positiva e encerramento pelo silêncio. A interrupção levou a uma captura suspensa e incompleta. Um reenvio idêntico foi confirmado como duplicado. Um bloco atrasado preservou histórico sem reativar a decisão, e um bloco fresco retomou o fluxo. Foram verificadas a rejeição de CA e endereço inválidos, a recusa por credenciais e permissões, e a recuperação da ata após reinício.
+Os 20 testes Python do servidor 4.1.4 passaram. Os testes observaram bloqueio de abertura diante de presença válida zero, abertura após nova leitura positiva e encerramento pelo silêncio. A interrupção levou a uma captura suspensa e incompleta. Um reenvio idêntico foi confirmado como duplicado. Um bloco atrasado preservou histórico sem reativar a decisão, e um bloco fresco retomou o fluxo. Foram verificadas a rejeição de CA e endereço inválidos, a recusa por credenciais e permissões, a recuperação da ata após reinício e a rejeição de respostas em inglês.
 
 No Android 4.0.1, passaram três testes JVM e dois instrumentados. O registro do emulador mostra importação de CA, confirmação de áudio, parada e consulta a uma ata persistida. Uma regressão controlada alterou em 120 segundos o relógio da API. O cliente anterior enviou 15 blocos sem produzir medida de um bloco fresco. O cliente corrigido recebeu a medição em dBFS e confirmou a parada. O resultado sustenta a escolha de usar a referência do servidor e o tempo monotônico para preservar a idade dos blocos.
 
@@ -290,7 +290,7 @@ Falha e recuperação & A captura marcou a lacuna, arquivou o bloco tardio e ret
 Persistência & ID, transcrição e ata foram recuperados após reinício. & Testes de API e ensaios de inferência. \\
 Canal e autorização & Identidades inválidas e operações fora do papel ou da sala foram recusadas. & Testes HTTPS e contrato v1. \\
 Aplicativo instalável & O Android confirmou blocos e consultou o histórico no emulador. & Build, assinatura e testes Android. \\
-Exportação local & O PDF conservou a transcrição e o WAV restaurou os blocos PCM recebidos. & Verificação de regressão do servidor 4.1.3. \\
+Exportação local & O PDF conservou a transcrição e o WAV restaurou os blocos PCM recebidos. & Verificação de regressão do servidor 4.1.4. \\
 \bottomrule
 \end{tabularx}
 \end{table}

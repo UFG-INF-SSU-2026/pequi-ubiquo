@@ -10,7 +10,7 @@ fi
 installer=$(cd -- "$(dirname -- "$0")" && pwd)
 server="$installer/../servidor"
 output="$installer/saida"
-version=4.1.3-1
+version=4.1.4-1
 name=towerai-servidor
 artifact="${name}_${version}_amd64.deb"
 build=$(mktemp -d)
@@ -21,7 +21,7 @@ python="$build/venv/bin/python"
 "$python" -m pip install -r "$installer/requirements-build.txt"
 "$python" -m PyInstaller --noconfirm --onedir --name "$name" \
     --distpath "$build/dist" --workpath "$build/pyinstaller" --specpath "$build" \
-    --paths "$server" --collect-data faster_whisper --collect-data reportlab --copy-metadata faster-whisper --copy-metadata huggingface_hub \
+    --paths "$server" --collect-data faster_whisper --collect-data reportlab --collect-data py3langid --copy-metadata faster-whisper --copy-metadata huggingface_hub \
     --hidden-import huggingface_hub._snapshot_download --hidden-import huggingface_hub.hf_api \
     --hidden-import huggingface_hub.file_download "$server/desktop_app.py"
 

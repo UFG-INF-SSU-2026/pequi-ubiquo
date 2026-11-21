@@ -16,7 +16,7 @@ def collect(output):
             shutil.copyfile(source, output / name)
     pending = [
         "faster-whisper", "ctranslate2", "opencv-python-headless", "cryptography",
-        "cv2-enumerate-cameras", "reportlab", "pypdf",
+        "cv2-enumerate-cameras", "reportlab", "pypdf", "py3langid",
     ]
     copied = set()
     while pending:

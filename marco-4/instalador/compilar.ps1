@@ -32,7 +32,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Não foi possível reunir as licenças dos com
 
 & $Python -m PyInstaller --noconfirm --onedir --windowed --name TowerAI-Servidor `
     --distpath $dist --workpath (Join-Path $build 'pyinstaller') --specpath $build `
-    --paths $server --collect-data faster_whisper --collect-data reportlab --copy-metadata faster-whisper --copy-metadata huggingface_hub `
+    --paths $server --collect-data faster_whisper --collect-data reportlab --collect-data py3langid --copy-metadata faster-whisper --copy-metadata huggingface_hub `
     --hidden-import huggingface_hub._snapshot_download --hidden-import huggingface_hub.hf_api `
     --hidden-import huggingface_hub.file_download (Join-Path $server 'desktop_app.py')
 if ($LASTEXITCODE -ne 0) { throw 'A compilação do executável falhou.' }

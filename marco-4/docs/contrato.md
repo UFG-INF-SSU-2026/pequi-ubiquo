@@ -49,3 +49,5 @@ Os estados de processamento são `AGUARDANDO`, `PENDENTE`, `TRANSCREVENDO`, `GER
 ```
 
 `owner` e `due` são strings vazias quando o texto não fornece a informação. O aplicativo exibe a transcrição junto com a ata para revisão humana. Os registros ficam no SQLite por sala, com horário de início e encerramento, qualidade, status e duração. Os eventos de presença expiram para decisão em 15 s e são podados do banco após uma hora.
+
+A geração solicita português do Brasil. Desde a versão 4.1.4, o servidor valida a resposta do modelo para detectar inglês no resumo, nas decisões, nas tarefas e nos prazos. Quando detecta, repete a geração uma vez. Se o idioma incorreto persistir, o processamento fica com status `FALHOU` e a transcrição permanece disponível. No painel local, **Gerar ata novamente…** usa a transcrição de uma reunião já encerrada e substitui a ata após o sucesso.

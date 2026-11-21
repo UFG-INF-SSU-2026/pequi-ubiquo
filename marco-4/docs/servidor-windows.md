@@ -1,6 +1,6 @@
 # TowerAI Servidor no Windows
 
-Instale `TowerAI-Servidor-Setup-4.1.3.exe` no PC que receberá o áudio. O instalador é para Windows 10 ou 11 x64 e inclui o ambiente de execução, o servidor HTTPS, o llama.cpp e os pesos do detector YOLOX-S. A opção de baixar os pesos de transcrição e ata já vem marcada. Ao abrir o TowerAI pela última tela do instalador, os downloads dos modelos restantes começam em segundo plano. Você pode configurar a rede, o microfone e a webcam enquanto os pesos são baixados.
+Instale `TowerAI-Servidor-Setup-4.1.4.exe` no PC que receberá o áudio. O instalador é para Windows 10 ou 11 x64 e inclui o ambiente de execução, o servidor HTTPS, o llama.cpp e os pesos do detector YOLOX-S. A opção de baixar os pesos de transcrição e ata já vem marcada. Ao abrir o TowerAI pela última tela do instalador, os downloads dos modelos restantes começam em segundo plano. Você pode configurar a rede, o microfone e a webcam enquanto os pesos são baixados.
 
 ## Configurar pela primeira vez
 
@@ -29,6 +29,8 @@ Abra **Histórico**, selecione uma reunião encerrada e clique em **Exportar PDF
 
 Desde a versão 4.1.3, o servidor preserva a gravação das reuniões no banco local. Quando disponível, ela acompanha o PDF no anexo `audio-da-reuniao.wav`. Abra o painel de anexos de um leitor de PDF que ofereça esse recurso. As reuniões que já tiveram o áudio descartado pelas versões anteriores continuam exportáveis com os dados disponíveis.
 
+Para corrigir uma ata anterior, inicie o servidor e, em **Histórico**, selecione a reunião e clique em **Gerar ata novamente…**. O sistema usa a transcrição salva e substitui a ata após processar. Use **Atualizar lista** até aparecer **Ata pronta** e exporte o PDF de novo.
+
 ## Dados, migração e diagnóstico
 
 O comando **Abrir pasta de dados** abre `%LOCALAPPDATA%\TowerAI Servidor`. Ali ficam o banco, os certificados, o cadastro, os modelos baixados e os registros `servidor.log` e `ata.log`. As atualizações e a desinstalação preservam essa pasta.
@@ -52,4 +54,4 @@ $towerPython = '.\servidor\.venv\Scripts\python.exe'
 & '.\instalador\compilar.ps1'
 ```
 
-O executável de instalação fica em `instalador/saida/TowerAI-Servidor-Setup-4.1.3.exe`. Use `-Llama` e `-Inno` para indicar caminhos diferentes dos padrões do script.
+O executável de instalação fica em `instalador/saida/TowerAI-Servidor-Setup-4.1.4.exe`. Use `-Llama` e `-Inno` para indicar caminhos diferentes dos padrões do script.

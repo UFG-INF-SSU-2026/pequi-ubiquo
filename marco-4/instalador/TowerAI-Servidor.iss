@@ -1,5 +1,5 @@
 #define AppName "TowerAI Servidor"
-#define AppVersion "4.1.3"
+#define AppVersion "4.1.4"
 
 [Setup]
 AppId={{C016F406-11CC-43FA-8866-07EF2E1467E0}

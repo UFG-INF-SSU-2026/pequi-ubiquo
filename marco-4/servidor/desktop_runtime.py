@@ -386,6 +386,11 @@ class DesktopServer:
     def text_ready(self):
         return self.text_process is not None and self.text_process.poll() is None
 
+    def regenerate_minutes(self, capture_id):
+        if not self.running or not self.text_ready():
+            raise ValueError("Inicie o servidor para gerar uma nova ata.")
+        self.server.api.db.regenerate_minutes(capture_id)
+
     def start(self, report):
         if self.running:
             return

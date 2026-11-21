@@ -318,6 +318,8 @@ class App:
         self.history_status.pack(side="left")
         self.history_export_button = self.button(actions, "Exportar PDF…", self.export_history, accent=True)
         self.history_export_button.pack(side="right")
+        self.history_regenerate_button = self.button(actions, "Gerar ata novamente…", self.regenerate_history_minutes)
+        self.history_regenerate_button.pack(side="right", padx=(0, 8))
         self.button(actions, "Atualizar lista", self.refresh_history).pack(side="right", padx=(0, 8))
 
     def history_tab_changed(self, event):
@@ -325,8 +327,13 @@ class App:
             self.history_dirty = True
 
     def history_controls(self):
-        enabled = bool(self.history_tree.selection()) and not self.busy
-        self.history_export_button.state(["!disabled"] if enabled else ["disabled"])
+        selection = self.history_tree.selection()
+        meeting = self.history_rows.get(selection[0]) if selection else None
+        can_export = meeting is not None and not self.busy
+        can_regenerate = (can_export and self.server.running and self.server.text_ready()
+                          and meeting["has_transcript"] and meeting["processing"] in ("PRONTA", "FALHOU"))
+        self.history_export_button.state(["!disabled"] if can_export else ["disabled"])
+        self.history_regenerate_button.state(["!disabled"] if can_regenerate else ["disabled"])
 
     def refresh_history(self):
         if self.busy:
@@ -382,6 +389,23 @@ class App:
         if destination:
             self.run_task("Gerando PDF da reunião…", lambda: save_meeting_pdf(self.config.database, meeting["id"], destination),
                           success=f"PDF salvo em {destination}")
+
+    def regenerate_history_minutes(self):
+        selection = self.history_tree.selection()
+        if not selection or self.history_regenerate_button.instate(["disabled"]):
+            return
+        meeting = self.history_rows[selection[0]]
+        if messagebox.askyesno(
+            "Gerar ata novamente",
+            f"Gerar uma nova ata para “{meeting['title']}” com a transcrição salva?",
+            parent=self.root,
+        ):
+            self.run_task(
+                "Enviando ata para processamento…",
+                lambda: self.server.regenerate_minutes(meeting["id"]),
+                done=lambda _: setattr(self, "history_dirty", True),
+                success="Ata enviada para a fila. Atualize a lista até aparecer Ata pronta.",
+            )
 
     def open_data_folder(self):
         try:

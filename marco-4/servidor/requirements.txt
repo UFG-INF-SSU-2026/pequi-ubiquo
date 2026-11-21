@@ -4,3 +4,4 @@ opencv-python-headless==4.13.0.92
 cryptography>=46,<48
 reportlab==4.4.9
 pypdf==6.21.4
+py3langid==0.4.0

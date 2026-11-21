@@ -4,10 +4,10 @@ O pacote `.deb` é para Ubuntu 24.04 e 26.04 Desktop em PCs x86-64 (amd64). Ele 
 
 ## Instalar
 
-Na pasta que contém o arquivo `towerai-servidor_4.1.3-1_amd64.deb`, rode:
+Na pasta que contém o arquivo `towerai-servidor_4.1.4-1_amd64.deb`, rode:
 
 ```bash
-sudo apt install ./towerai-servidor_4.1.3-1_amd64.deb
+sudo apt install ./towerai-servidor_4.1.4-1_amd64.deb
 ```
 
 Abra **TowerAI Servidor** no menu de aplicativos ou execute `towerai-servidor` em um terminal da sessão gráfica, com seu usuário normal. Para começar a baixar os pesos ao abrir o painel, execute `towerai-servidor --preparar-modelos`.
@@ -33,6 +33,8 @@ Se o IP mudar, gere o certificado para a interface selecionada e importe a nova 
 Abra **Histórico**, selecione uma reunião encerrada e clique em **Exportar PDF…**. O documento reúne dados e avisos da captura, a ata, as decisões, as ações e a transcrição com marcações de tempo. A exportação funciona com o servidor parado. Use **Atualizar lista** para obter o estado mais recente do processamento.
 
 Desde a versão 4.1.3, o servidor preserva a gravação das reuniões no banco local. Quando disponível, ela acompanha o PDF no anexo `audio-da-reuniao.wav`. Abra o painel de anexos de um leitor de PDF que ofereça esse recurso. As reuniões que já tiveram o áudio descartado pelas versões anteriores continuam exportáveis com os dados disponíveis.
+
+Para corrigir uma ata anterior, inicie o servidor e, em **Histórico**, selecione a reunião e clique em **Gerar ata novamente…**. O sistema usa a transcrição salva e substitui a ata após processar. Use **Atualizar lista** até aparecer **Ata pronta** e exporte o PDF de novo.
 
 ## Compilar
 

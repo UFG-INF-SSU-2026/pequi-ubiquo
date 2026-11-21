@@ -9,6 +9,7 @@ from tempfile import TemporaryDirectory
 from pypdf import PdfReader
 
 from meeting_pdf import AUDIO_ATTACHMENT, save_meeting_pdf
+from models import MinutesLanguageError
 from towerai import RATE, Database, Device, MeetingProcessor
 
 
@@ -80,13 +81,31 @@ class MeetingExportTest(unittest.TestCase):
             for sequence, pcm in enumerate(blocks):
                 server.add_audio(device, capture, sequence, pcm, 100)
             server.finish(device, capture)
-            minutes = {"summary": "Decisão aprovada.", "decisions": [], "action_items": []}
+            minutes = {"summary": "The decision was approved.", "decisions": [], "action_items": []}
             processor = MeetingProcessor(
                 server, lambda _: [{"start": 0, "end": 3, "text": "Vamos seguir."}], lambda _: minutes,
             )
             self.assertTrue(processor.run_once())
 
-            Database(database)  # Reabre o banco após o fim do processamento.
+            restarted = Database(database)
+            restarted.regenerate_minutes(capture)
+            with self.assertRaisesRegex(ValueError, "sem processamento em curso"):
+                restarted.regenerate_minutes(capture)
+
+            def wrong_language(_):
+                raise MinutesLanguageError("O modelo de ata não respondeu em português do Brasil.")
+
+            processor = MeetingProcessor(restarted, lambda _: self.fail("Transcrição reexecutada"), wrong_language,
+                                         log=lambda _: None)
+            self.assertTrue(processor.run_once())
+            failed = restarted.capture(device, capture)
+            self.assertEqual(failed["processing"], "FALHOU")
+            self.assertIn("português do Brasil", failed["error"])
+            self.assertEqual(failed["minutes"], minutes)
+
+            restarted.regenerate_minutes(capture)
+            processor.summarize = lambda _: {"summary": "Decisão aprovada.", "decisions": [], "action_items": []}
+            self.assertTrue(processor.run_once())
             save_meeting_pdf(database, capture, destination)
             reader = PdfReader(destination)
             text = reader.pages[0].extract_text()
@@ -94,6 +113,8 @@ class MeetingExportTest(unittest.TestCase):
             self.assertIn("Ata disponível no histórico", text)
             self.assertIn("Duração do áudio registrado: 0:03", text)
             self.assertIn("0:00 Vamos seguir.", text)
+            self.assertIn("Decisão aprovada.", text)
+            self.assertNotIn("The decision was approved.", text)
             self.assertIn(AUDIO_ATTACHMENT, text)
             with wave.open(io.BytesIO(reader.attachments[AUDIO_ATTACHMENT][0]), "rb") as wav:
                 self.assertEqual((wav.getnchannels(), wav.getsampwidth(), wav.getframerate()), (1, 2, RATE))

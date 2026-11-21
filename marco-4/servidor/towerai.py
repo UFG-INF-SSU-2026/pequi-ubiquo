@@ -20,6 +20,8 @@ import sys
 from time import time
 from urllib.parse import urlsplit
 
+from models import MinutesLanguageError
+
 
 RATE = 16000
 CHUNK_BYTES = RATE * 2
@@ -256,7 +258,8 @@ class Database:
             if db is None:
                 return []
             rows = db.execute(
-                "SELECT id, room, title, started_at, gap, processing FROM captures "
+                "SELECT id, room, title, started_at, gap, processing, transcript IS NOT NULL AS has_transcript "
+                "FROM captures "
                 "WHERE started_at IS NOT NULL AND ended_at IS NOT NULL ORDER BY started_at DESC, id DESC"
             )
             return [dict(row) for row in rows]
@@ -370,6 +373,14 @@ class Database:
                 raise ApiError(409, "A captura não está pronta para processar.")
             return self._result(self._get(db, capture_id))
 
+    def regenerate_minutes(self, capture_id):
+        """Reaproveita a transcrição salva e substitui a ata quando a nova geração terminar."""
+        with self.connection(write=True) as db:
+            row = self._get(db, capture_id)
+            if row["ended_at"] is None or row["processing"] not in ("PRONTA", "FALHOU") or row["transcript"] is None:
+                raise ValueError("A reunião precisa estar encerrada, com transcrição salva e sem processamento em curso.")
+            db.execute("UPDATE captures SET processing='PENDENTE', error=NULL WHERE id=?", (capture_id,))
+
     def recover_jobs(self):
         with self.connection(write=True) as db:
             db.execute(
@@ -452,6 +463,9 @@ class MeetingProcessor:
                 "summary": "Nenhuma fala inteligível foi identificada.", "decisions": [], "action_items": [],
             }
             self.db.save_minutes(capture_id, minutes)
+        except MinutesLanguageError as error:
+            self.log(f"{capture_id}: {error}")
+            self.db.fail_job(capture_id, str(error))
         except Exception as error:
             self.log(f"{capture_id}: falha na {stage} ({type(error).__name__}): {error}")
             self.db.fail_job(capture_id, f"Falha na {stage} local. Verifique o servidor e tente novamente.")
