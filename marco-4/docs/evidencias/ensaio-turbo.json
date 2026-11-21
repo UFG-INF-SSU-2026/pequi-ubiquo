@@ -1,0 +1,51 @@
+{
+  "mode": "WAV reproduzido via HTTPS, presença injetada, motores reais locais",
+  "whisper": "large-v3-turbo",
+  "device": "cuda",
+  "textModel": "qwen2.5-1.5b",
+  "audioSeconds": 17,
+  "elapsedSeconds": 16.32,
+  "persistedAfterRestart": true,
+  "transcript": [
+    {
+      "start": 0.0,
+      "end": 2.18,
+      "text": "Reunião semanal do projeto."
+    },
+    {
+      "start": 3.3,
+      "end": 6.48,
+      "text": "Decidimos publicar o manual na sexta-feira."
+    },
+    {
+      "start": 7.52,
+      "end": 10.7,
+      "text": "A Ana vai revisar o manual até quinta-feira."
+    },
+    {
+      "start": 11.74,
+      "end": 15.28,
+      "text": "Bruno vai testar o aplicativo até quarta-feira."
+    }
+  ],
+  "minutes": {
+    "summary": "Reunião semanal do projeto. Manual publicado na sexta-feira. Ana revisará o manual até quinta-feira. Bruno testará o aplicativo até quarta-feira.",
+    "decisions": [
+      "Manual publicado na sexta-feira"
+    ],
+    "action_items": [
+      {
+        "task": "Revisar o manual",
+        "owner": "Ana",
+        "due": "quinta-feira",
+        "done": false
+      },
+      {
+        "task": "Testar o aplicativo",
+        "owner": "Bruno",
+        "due": "quarta-feira",
+        "done": false
+      }
+    ]
+  }
+}

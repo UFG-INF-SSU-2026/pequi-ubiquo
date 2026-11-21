@@ -12,6 +12,8 @@
 
 > **Marco 3** — continuação do Marco 2 com **broker HiveMQ instalado localmente**, canal MQTT com TLS, autenticação e resumo da reunião: [guia de execução](marco-3/README.md) e [plano de segurança](marco-3/plano-seguranca.md).
 
+> **Marco 4** — [APK Android, implantação, contratos, testes, artigo e roteiro do vídeo](marco-4/README.md).
+
 ## Parte 1 — Compreensão do problema
 
 ### 1. Problema e usuários

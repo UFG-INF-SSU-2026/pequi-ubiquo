@@ -1,0 +1,3 @@
+-r ../servidor/requirements.txt
+cv2-enumerate-cameras==1.4.0
+PyInstaller==6.22.3

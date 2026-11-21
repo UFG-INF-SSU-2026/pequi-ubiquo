@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=TowerAI Servidor
+Comment=Configure o microfone e a webcam e acompanhe as reuniões
+Exec=towerai-servidor
+Icon=computer
+Terminal=false
+Categories=Utility;

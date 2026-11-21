@@ -1,0 +1,4 @@
+faster-whisper==1.2.1
+ctranslate2==4.9.0
+opencv-python-headless==4.13.0.92
+cryptography>=46,<48

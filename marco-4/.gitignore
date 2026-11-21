@@ -1,0 +1,11 @@
+/api-groq.txt
+**/.env
+**/.venv/
+**/__pycache__/
+**/local.properties
+**/.gradle/
+**/build/
+/servidor/local/
+/servidor/modelos/
+/.ferramentas/
+/instalador/saida/

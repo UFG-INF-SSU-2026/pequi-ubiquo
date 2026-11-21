@@ -1,0 +1,40 @@
+Android 15 (API 35), emulador x86_64
+Gradle 9.2.1, AGP 9.0.1, JDK 25, SDK 36.0.0
+Build: assembleDebug, testDebugUnitTest e assembleDebugAndroidTest
+APK e APK de testes instalados com sucesso.
+APK SHA-256: AA4BDDC4A87CE6DF8103AC2599211800E6DA7AFEC04E62C227958E6EAA744BC0
+JVM: 2 testes, 0 falhas
+Instrumentação: CA exigida, HTTPS autenticado, PCM confirmado, parada e histórico.
+O resultado do ensaio padrão foi copiado para o banco de teste da interface.
+
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): false
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+
+
+com.mokekinho.towerai.ConnectionScreenTest:..
+
+Time: 12.719
+
+OK (2 tests)
+
+
+
+Atualização Android 4.0.1
+APK instalado sobre a versão anterior, com o mesmo certificado de assinatura.
+APK SHA-256 da versão 4.0.1: 97B9706860F9B742DB26795B80BD38B834BF55D5FAA9F1D2CB429055677C7ED8
+JVM: 3 testes, 0 falhas.
+Regressão: API de teste com relógio 120 segundos adiantado. O APK 4.0 enviou 15 blocos e ficou sem nível dBFS. O APK 4.0.1 confirmou o envio de áudio e a parada.
+
+com.mokekinho.towerai.ConnectionScreenTest:..
+
+Time: 6.971
+
+OK (2 tests)
+
+

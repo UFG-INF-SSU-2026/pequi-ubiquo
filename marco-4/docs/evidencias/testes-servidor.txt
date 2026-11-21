@@ -1,0 +1,23 @@
+test_audio_atrasado_vai_ao_historico_sem_reabrir_contexto (test_fluxo.FluxoTest.test_audio_atrasado_vai_ao_historico_sem_reabrir_contexto) ... ok
+test_dois_produtores_mudam_a_decisao_e_ata_sobrevive_ao_reinicio (test_fluxo.FluxoTest.test_dois_produtores_mudam_a_decisao_e_ata_sobrevive_ao_reinicio) ... 127.0.0.1 - - [20/Nov/2026 19:20:32] PUT 409
+ok
+test_falha_da_ata_preserva_transcricao_e_reprocessa_so_a_ata (test_fluxo.FluxoTest.test_falha_da_ata_preserva_transcricao_e_reprocessa_so_a_ata) ... ok
+test_identidade_e_autorizacao (test_fluxo.FluxoTest.test_identidade_e_autorizacao) ... 127.0.0.1 - - [20/Nov/2026 19:20:35] GET 401
+127.0.0.1 - - [20/Nov/2026 19:20:35] GET 403
+127.0.0.1 - - [20/Nov/2026 19:20:35] PUT 404
+127.0.0.1 - - [20/Nov/2026 19:20:35] PUT 403
+127.0.0.1 - - [20/Nov/2026 19:20:35] PUT 403
+127.0.0.1 - - [20/Nov/2026 19:20:35] POST 403
+ok
+test_presenca_expira_e_amostra_atrasada_nao_reescreve_o_contexto (test_fluxo.FluxoTest.test_presenca_expira_e_amostra_atrasada_nao_reescreve_o_contexto) ... ok
+test_queda_da_rede_suspende_e_reenvio_recupera_sem_duplicar (test_fluxo.FluxoTest.test_queda_da_rede_suspende_e_reenvio_recupera_sem_duplicar) ... 127.0.0.1 - - [20/Nov/2026 19:20:37] PUT 409
+ok
+test_tls_recusa_ca_desconhecida_e_nome_ausente_no_certificado (test_fluxo.FluxoTest.test_tls_recusa_ca_desconhecida_e_nome_ausente_no_certificado) ... ok
+test_formato_da_ata_e_campos_ausentes_na_transcricao (test_models.ModelsTest.test_formato_da_ata_e_campos_ausentes_na_transcricao) ... ok
+test_texto_so_pode_ser_enviado_a_um_modelo_de_loopback (test_models.ModelsTest.test_texto_so_pode_ser_enviado_a_um_modelo_de_loopback) ... ok
+test_transcricao_aceita_apenas_whisper_large_v3_e_turbo (test_models.ModelsTest.test_transcricao_aceita_apenas_whisper_large_v3_e_turbo) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 9.619s
+
+OK

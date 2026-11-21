@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net">
+  <diagram id="towerai-marco4" name="Arquitetura">
+    <mxGraphModel dx="1360" dy="720" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1450" pageHeight="720" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/><mxCell id="1" parent="0"/>
+        <mxCell id="title" value="TowerAI · Arquitetura do Marco 4" style="text;html=1;fontSize=26;fontStyle=1;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="50" y="35" width="700" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="android" value="Android · microfone e histórico" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAF0E9;strokeColor=#2D6B5A;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="150" width="260" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="camera" value="Notebook · produtor de presença&lt;br&gt;Webcam e detector de pessoas YOLOX-S" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAF0E9;strokeColor=#2D6B5A;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="50" y="380" width="260" height="88" as="geometry"/>
+        </mxCell>
+        <mxCell id="api" value="Notebook · API HTTPS&lt;br&gt;Autenticação, autorização e ACK" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E4EDFA;strokeColor=#345987;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="480" y="260" width="240" height="85" as="geometry"/>
+        </mxCell>
+        <mxCell id="decision" value="Regra da sala e fila de processamento" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E4EDFA;strokeColor=#345987;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="778" y="260" width="240" height="85" as="geometry"/>
+        </mxCell>
+        <mxCell id="db" value="SQLite&lt;br&gt;Reuniões, segmentos e atas" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;size=15;fillColor=#FFF1D2;strokeColor=#876739;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="105" width="230" height="86" as="geometry"/>
+        </mxCell>
+        <mxCell id="whisper" value="Whisper Large v3 / Turbo&lt;br&gt;CPU ou GPU local" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0EAFB;strokeColor=#5E4B88;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="260" width="230" height="85" as="geometry"/>
+        </mxCell>
+        <mxCell id="llm" value="Modelo de texto local&lt;br&gt;API em loopback" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0EAFB;strokeColor=#5E4B88;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="420" width="230" height="85" as="geometry"/>
+        </mxCell>
+        <mxCell id="audio" value="HTTPS · áudio e consulta" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.28;entryX=0;entryY=0.22;endArrow=block;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="android" target="api"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="response" value="HTTPS · estado, transcrição e ata" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.48;entryX=1;entryY=0.72;endArrow=block;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="api" target="android"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="presence" value="HTTPS · contagem e validade" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.8;endArrow=block;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="camera" target="api"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="api_decision" style="endArrow=block;html=1;" edge="1" parent="1" source="api" target="decision"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="persistence" value="transações" style="edgeStyle=orthogonalEdgeStyle;html=1;startArrow=block;endArrow=block;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="decision" target="db"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="stt" value="WAV / segmentos" style="edgeStyle=orthogonalEdgeStyle;html=1;startArrow=block;endArrow=block;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="decision" target="whisper"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="minutes" value="texto / ata JSON" style="edgeStyle=orthogonalEdgeStyle;html=1;startArrow=block;endArrow=block;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="decision" target="llm"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
