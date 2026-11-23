@@ -17,7 +17,7 @@ O TowerAI usa o microfone de um Android e uma webcam para acompanhar o contexto 
 | Comandos, casos e resultados | [Verificação e evidências](docs/verificacao.md) |
 | Artigo técnico no template SBC | [PDF](docs/artigo.pdf) · [Fonte LaTeX](docs/templates%20latex/template_artigo/towerai.tex) |
 | Apresentação final no template Beamer UFG | [PDF](docs/apresentacao.pdf) · [Fonte LaTeX](docs/templates%20latex/template_slide/towerai-marco-4.tex) |
-| Vídeo, compilação e entrega | [Roteiro, contribuições, feedback e registro de IA](https://www.youtube.com/watch?v=kCKiNdXUMbs) |
+| Vídeo, compilação e entrega | [link do video no youtube](https://www.youtube.com/watch?v=kCKiNdXUMbs) |
 | Orientação original | [Spec do Marco 4](Orientacoes_Marco_04_Projeto_Final_Software_para_Sistemas_Ubiquos.pdf) |
 
 ## Fluxo
