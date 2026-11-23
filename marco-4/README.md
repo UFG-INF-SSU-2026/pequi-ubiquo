@@ -19,6 +19,7 @@ O TowerAI usa o microfone de um Android e uma webcam para acompanhar o contexto 
 | Apresentação final no template Beamer UFG | [PDF](docs/apresentacao.pdf) · [Fonte LaTeX](docs/templates%20latex/template_slide/towerai-marco-4.tex) |
 | Vídeo, compilação e entrega | [link do video no youtube](https://www.youtube.com/watch?v=kCKiNdXUMbs) |
 | Orientação original | [Spec do Marco 4](Orientacoes_Marco_04_Projeto_Final_Software_para_Sistemas_Ubiquos.pdf) |
+| Releases do projeto | [link para releases e download dos instaladores](https://github.com/UFG-INF-SSU-2026/pequi-ubiquo/releases/tag/marco-4-v4.1.4)|
 
 ## Fluxo
 
